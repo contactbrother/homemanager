@@ -8,6 +8,7 @@ import {
   MAX_FILE_BYTES,
   STORAGE_BUCKET,
 } from "@/lib/constants";
+import { safeName } from "@/lib/storage";
 
 /** FR-007. Admin only; the policy enforces it. */
 export async function createProperty(input: {
@@ -53,8 +54,4 @@ export async function createProperty(input: {
 
   revalidatePath(`/admin/clients/${input.ownerId}`);
   return ok({ id: data.id });
-}
-
-export function safeName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-120);
 }

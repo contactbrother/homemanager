@@ -11,7 +11,7 @@ import {
   STORAGE_BUCKET,
   type DocumentType,
 } from "@/lib/constants";
-import { safeName } from "@/features/properties/actions";
+import { safeName } from "@/lib/storage";
 
 /** FR-011, FR-013, FR-020. Client or team. An absent expiry is valid. */
 export async function uploadDocument(input: {

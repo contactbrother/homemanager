@@ -22,8 +22,10 @@ never used for data access. No API layer, no ORM, no state library, no component
 
 **Language/Version**: TypeScript 5.x on Node 24 (Codespaces and Vercel both current LTS or later)
 
-**Primary Dependencies**: Next.js 15 App Router with React 19, Tailwind CSS 4,
-`@supabase/supabase-js`, `@supabase/ssr`. Nothing else. Versions pinned at scaffold time.
+**Primary Dependencies**: Next.js 16.3.4 App Router with React 19.2.8, Tailwind CSS 4,
+`@supabase/supabase-js` 2.112.4, `@supabase/ssr` 0.12.5, `server-only`. Nothing else, all
+pinned exactly. The plan was written against Next 15; `create-next-app` installed 16.3.4,
+which is current and was kept.
 
 **Storage**: Supabase Postgres (project `jqeuxnkvmhhuvcrorcgh`) with row level security on
 all six tables, plus one private Supabase Storage bucket `dar-files`.

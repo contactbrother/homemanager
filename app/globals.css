@@ -92,7 +92,18 @@ h1, h2, h3 {
   border-radius: var(--r-sm);
 }
 
-/* Motion: elements scale and settle. They do not slide in from off screen. */
+/* Motion: elements scale and settle. They do not slide in from off screen, which is
+   why the keyframe below moves 4px at most and does its work with scale. */
+@keyframes settle {
+  from { transform: scale(0.985); opacity: 0; }
+  to   { transform: none;         opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .settle { animation: settle var(--base) var(--ease) both; }
+}
+
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

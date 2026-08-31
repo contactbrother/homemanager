@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 /**
+/* Next 16 renamed the middleware convention to proxy; the file does the same job.
  * Refreshes the session, routes by role, and ends the session of a deactivated client.
  *
  * Role and deactivation are read once when they are not already carried in the request
@@ -16,7 +17,7 @@ import { createServerClient } from "@supabase/ssr";
  */
 const CACHE_COOKIE = "dar-actor";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

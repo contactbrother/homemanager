@@ -19,13 +19,16 @@ import type { DocumentWithStatus } from "@/features/documents/types";
 export function DocumentRowItem({
   document: doc,
   canDelete = false,
+  pending = false,
 }: {
   document: DocumentWithStatus;
   canDelete?: boolean;
+  /** An optimistic row, not yet stored. It cannot be opened or deleted. FR-041. */
+  pending?: boolean;
 }) {
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const label = expiryLabel(doc.expires_on);
+  const label = pending ? null : expiryLabel(doc.expires_on);
 
   function open() {
     setError(null);
@@ -53,13 +56,13 @@ export function DocumentRowItem({
         <button
           type="button"
           onClick={open}
-          disabled={busy}
+          disabled={busy || pending}
           className="text-left min-h-[44px] flex-1"
         >
           <span className="font-medium">{doc.title}</span>
           <span className="block text-[var(--mute)]">
-            {DOCUMENT_TYPE_LABELS[doc.doc_type]}
-            {doc.expires_on ? ` · ${formatDate(doc.expires_on)}` : ""}
+            {pending ? "Uploading" : DOCUMENT_TYPE_LABELS[doc.doc_type]}
+            {doc.expires_on && !pending ? ` · ${formatDate(doc.expires_on)}` : ""}
           </span>
         </button>
 

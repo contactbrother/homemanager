@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/supabase/types";
 import { MAX_FILE_BYTES, STORAGE_BUCKET, type TaskStatus } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
-import { safeName } from "@/features/properties/actions";
+import { safeName } from "@/lib/storage";
 
 /**
  * FR-021 to FR-026.

@@ -6,8 +6,7 @@ import { listDocuments } from "@/features/documents/queries";
 import { listTasksForProperty } from "@/features/tasks/queries";
 import { CreatePropertySheet } from "@/features/clients/components/create-property-sheet";
 import { DeactivateControl } from "@/features/clients/components/deactivate-control";
-import { UploadSheet } from "@/features/documents/components/upload-sheet";
-import { DocumentRowItem } from "@/features/documents/components/document-row";
+import { DocumentList } from "@/features/documents/components/document-list";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -62,19 +61,14 @@ export default async function AdminClientPage({
                   "No address recorded"}
               </p>
 
-              <div className="mt-4 flex items-center justify-between gap-4">
-                <h3 className="text-[length:var(--text-lead)]">Documents</h3>
-                <UploadSheet propertyId={property.id} label="Upload for client" />
-              </div>
-              {documents.length === 0 ? (
-                <EmptyState>No documents yet.</EmptyState>
-              ) : (
-                <ul className="mt-3 space-y-3">
-                  {documents.map((doc) => (
-                    <DocumentRowItem key={doc.id} document={doc} canDelete />
-                  ))}
-                </ul>
-              )}
+              <h3 className="mt-4 text-[length:var(--text-lead)]">Documents</h3>
+              <DocumentList
+                documents={documents}
+                propertyId={property.id}
+                canDelete
+                uploadVariant="outline"
+                uploadLabel="Upload for client"
+              />
 
               <h3 className="mt-6 text-[length:var(--text-lead)]">Tasks</h3>
               {tasks.length === 0 ? (

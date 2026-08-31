@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { uploadDocument } from "@/features/documents/actions";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
+import type { DocumentWithStatus } from "@/features/documents/types";
+import { expiryStatus } from "@/features/documents/expiry";
 import {
   DOCUMENT_TYPES,
   DOCUMENT_TYPE_LABELS,
@@ -14,9 +16,16 @@ import {
 export function UploadSheet({
   propertyId,
   label = "Upload a document",
+  variant = "primary",
+  onOptimistic,
 }: {
   propertyId: string;
   label?: string;
+  /** Secondary on the admin client page, where create-property is the primary
+   *  action and two gold buttons would break Principle I. */
+  variant?: "primary" | "outline";
+  /** Lets the list show the document before the server has stored it. FR-041. */
+  onOptimistic?: (row: DocumentWithStatus | null) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,26 +40,50 @@ export function UploadSheet({
       return;
     }
 
+    const title = String(form.get("title") ?? "");
+    const docType = String(form.get("docType") ?? "other") as DocumentType;
+    const expiresOn = String(form.get("expiresOn") ?? "") || null;
+
     setError(null);
+    setOpen(false);
+    onOptimistic?.({
+      id: `pending-${Date.now()}`,
+      property_id: propertyId,
+      uploaded_by: "",
+      title,
+      doc_type: docType,
+      file_path: "",
+      file_size: file.size,
+      mime_type: file.type,
+      expires_on: expiresOn,
+      notes: null,
+      created_at: new Date().toISOString(),
+      status: expiryStatus(expiresOn),
+    });
+
     start(async () => {
       const result = await uploadDocument({
         propertyId,
-        title: String(form.get("title") ?? ""),
-        docType: String(form.get("docType") ?? "other") as DocumentType,
-        expiresOn: String(form.get("expiresOn") ?? "") || null,
+        title,
+        docType,
+        expiresOn,
         file,
       });
+      // Either way the optimistic row goes: on success the server row replaces it,
+      // on failure it must visibly disappear rather than linger. FR-041.
+      onOptimistic?.(null);
       if (!result.ok) {
         setError(result.error);
-        return;
+        setOpen(true);
       }
-      setOpen(false);
     });
   }
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>{label}</Button>
+      <Button variant={variant} onClick={() => setOpen(true)}>
+        {label}
+      </Button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Upload a document">
         <form onSubmit={submit} className="space-y-4">
           <div>
