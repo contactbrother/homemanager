@@ -450,16 +450,16 @@ Dar looks like the pitch deck. Same palette, same type, so a client who saw the 
   /* Colour */
   --ink:        #132A24;  /* deep forest, primary text and dark surfaces */
   --ink-soft:   #3C4B45;  /* secondary text */
-  --gold:       #B8894A;  /* accent, primary actions */
-  --gold-deep:  #9A6F37;  /* accent pressed */
+  --gold:       #B8894A;  /* accent, primary action FILL ONLY, never text or icons */
+  --gold-text:  #8F6631;  /* the same gold, darkened for text and icons on light */
   --ivory:      #F7F3EC;  /* app background */
   --surface:    #FFFFFF;  /* cards */
-  --line:       #E2DACB;  /* borders, dividers */
-  --mute:       #6E7B76;  /* tertiary text */
+  --line:       #E2DACB;  /* borders, dividers, decorative only */
+  --mute:       #63706B;  /* tertiary text */
 
   /* Status, used sparingly */
   --ok:      #2F6F52;
-  --warn:    #B8894A;   /* same gold, deliberate */
+  --warn:    #8F6631;   /* same gold as --gold-text, deliberate */
   --alert:   #A4462F;
 
   /* Radius */
@@ -476,6 +476,23 @@ Dar looks like the pitch deck. Same palette, same type, so a client who saw the 
 }
 ```
 
+**Contrast, resolved 31 August 2026.** The palette as first drafted failed WCAG 2.2 AA in
+four places, which FR-053 of the specification requires it to meet. Measured ratios and the
+resolution:
+
+| Use | As drafted | Resolved |
+|---|---|---|
+| Label on the primary gold button | white on `--gold`, 3.13 | `--ink` on `--gold`, **4.85** |
+| Pressed state of that button | white on `--gold-deep`, 4.47 | expressed by scale, not colour; `--gold-deep` deleted |
+| Gold as text or icon on ivory | `--gold`, 2.83 | `--gold-text` `#8F6631`, **4.62** |
+| Tertiary text on ivory | `#6E7B76`, 3.99 | `--mute` `#63706B`, **4.68** |
+
+`--warn` moved with `--gold-text` for the same reason: as a text and pill colour the
+original gold failed at 2.83. Unchanged and passing: `--ink` on ivory 13.71, `--ink` on
+white 15.17, `--ink-soft` 8.31, `--ok` 5.40, `--alert` 5.43. `--line` at 1.26 is decorative,
+since a card is distinguished by its white fill rather than by its border, so no contrast
+minimum applies to it.
+
 ### 4.2 Type
 
 - **Fraunces** for headings and numbers. Loaded via `next/font/google`, weights 400 and 600.
@@ -485,7 +502,9 @@ Dar looks like the pitch deck. Same palette, same type, so a client who saw the 
 
 ### 4.3 Rules
 
-- One primary action per screen. Gold, filled. Everything else is text or outline.
+- One primary action per screen. Filled `--gold`, label in `--ink`. Everything else is text or outline.
+- The pressed state of the primary action is expressed by scale, not by darkening. There is no darker gold background.
+- Gold as text or an icon uses `--gold-text`. `--gold` is a fill colour only.
 - Cards on ivory: white, radius `--r-md`, 1px `--line` border, no shadow. Shadow only on sheets and floating elements.
 - Status colour appears only when something is genuinely due or wrong. A healthy screen has no colour beyond gold.
 - Minimum tap target 44px. Primary actions sit in the lower third, thumb reachable.
@@ -613,13 +632,19 @@ homemanager/
 
 ### 7.1 Environment variables
 
-`.env.local` in Codespaces, and the same three in Vercel project settings:
+`.env.local` in Codespaces, and the same four in Vercel project settings:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://jqeuxnkvmhhuvcrorcgh.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 SUPABASE_SERVICE_ROLE_KEY=<service role key>
+NEXT_PUBLIC_SUPPORT_WHATSAPP=<support WhatsApp number in international format>
 ```
+
+`NEXT_PUBLIC_SUPPORT_WHATSAPP` carries the contact route on the sign-in screen, required by
+FR-052. It is public by design: the screen needs it before any session exists, and a support
+number is not a secret. Where it is unset the contact route is hidden rather than rendered
+broken.
 
 **Security**: the service role key bypasses every policy above. It belongs only in `.env.local` and Vercel, never in the repo, never in a `NEXT_PUBLIC_` variable, never in a chat window. Rotate it in Supabase under Settings, API if it is ever exposed. `.env.local` must be listed in `.gitignore` before the first commit.
 
@@ -637,7 +662,7 @@ Then apply sections 3.1, 3.2 and 3.3 in the Supabase SQL editor, in that order.
 ### 7.3 Vercel deployment
 
 1. Import `contactbrother/homemanager` in Vercel, framework detected as Next.js
-2. Add the three environment variables above
+2. Add the four environment variables above
 3. Deploy, note the URL
 4. In Supabase, Authentication, URL Configuration: set Site URL to the Vercel URL and add `<vercel-url>/**` to redirect URLs, or magic links will fail
 5. Test sign in on a phone before anything else

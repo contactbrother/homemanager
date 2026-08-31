@@ -500,6 +500,13 @@ with nothing outstanding and confirming the calm empty state.
   number has not been provided and MUST NOT be invented; it is supplied before launch. The
   variable is public by design: the sign-in screen needs it before any session exists, and
   a support number is not a secret.
+- **The palette conflict with FR-053 is resolved, not deferred.** The design tokens as
+  first drafted failed AA in four places. Resolved on 31 August 2026: the primary button
+  keeps its gold fill with an `--ink` label at 4.85; its pressed state is expressed by
+  scale rather than by darkening, and `--gold-deep` is deleted; `--gold-text` `#8F6631` is
+  added for gold used as text or icons, at 4.62 on ivory; `--mute` becomes `#63706B` at
+  4.68; and `--warn` moves to `#8F6631` for the same reason as `--gold-text`. Section 4.1
+  of the build plan carries the measured ratios. No screen may use `--gold` for text.
 - **Accessibility is WCAG 2.2 AA contrast and keyboard operability, and nothing further.**
   Screen reader labelling beyond what semantic markup gives for free, reduced-motion
   handling, and text resizing beyond browser default are out of scope for this release.
