@@ -60,12 +60,11 @@ create policy "update own documents"
     )
   );
 
-create policy "delete own documents"
-  on documents for delete using (
-    is_admin() or property_id in (
-      select id from properties where owner_id = auth.uid()
-    )
-  );
+-- Deletion is a team action only. Clients upload but never delete.
+-- Deliberate divergence from section 3.2 of the build plan, which allowed a
+-- client to delete a document on their own property. Withdrawn 31 August 2026.
+create policy "admin deletes documents"
+  on documents for delete using (is_admin());
 
 -- Tasks
 create policy "read own tasks"
