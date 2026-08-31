@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+/* ============================================
+   Dar design tokens
+   Build plan section 4.1, corrected 31 August 2026 so the palette meets
+   WCAG 2.2 AA (FR-053). Measured ratios are recorded in section 4.1.
+   ============================================ */
+
+:root {
+  /* Colour */
+  --ink:        #132A24;  /* deep forest, primary text and dark surfaces */
+  --ink-soft:   #3C4B45;  /* secondary text */
+  --gold:       #B8894A;  /* primary action FILL ONLY, never text or icons */
+  --gold-text:  #8F6631;  /* the same gold, darkened for text and icons on light */
+  --ivory:      #F7F3EC;  /* app background */
+  --surface:    #FFFFFF;  /* cards */
+  --line:       #E2DACB;  /* borders and dividers, decorative only */
+  --mute:       #63706B;  /* tertiary text */
+
+  /* Status, used sparingly */
+  --ok:      #2F6F52;
+  --warn:    #8F6631;   /* same gold as --gold-text, deliberate */
+  --alert:   #A4462F;
+
+  /* Radius */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --fast: 180ms;
+  --base: 260ms;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-gold: var(--gold);
+  --color-gold-text: var(--gold-text);
+  --color-ivory: var(--ivory);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-mute: var(--mute);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-alert: var(--alert);
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+
+  /* Type scale: 32 / 24 / 20 / 17 / 15 / 13 / 11 */
+  --text-display: 2rem;
+  --text-title: 1.5rem;
+  --text-heading: 1.25rem;
+  --text-lead: 1.0625rem;
+  --text-body: 0.9375rem;
+  --text-small: 0.8125rem;
+  --text-tiny: 0.6875rem;
+}
+
+/* The palette is a single light scheme by design. It does not invert. */
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: var(--text-body);
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  body { font-size: 1rem; }
+}
+
+h1, h2, h3 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  line-height: 1.2;
+}
+
+/* Focus is always visible and meets the 3:1 contrast rule (FR-054). */
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Motion: elements scale and settle. They do not slide in from off screen. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
