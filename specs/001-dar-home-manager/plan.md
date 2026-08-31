@@ -57,16 +57,19 @@ routes, 6 tables, 5 feature folders.
 | # | Principle | Pre-Phase 0 | Post-Phase 1 | How the design satisfies it |
 |---|---|---|---|---|
 | I | Calm Over Busy | PASS | PASS | One primary action per route, listed in `contracts/ui-contracts.md`. Gold fill with `--ink` label; everything else text or outline |
-| II | Every Feature Serves a Real Client Task | **VIOLATION** | **VIOLATION** | `service_records` is created with no screen. Recorded in Complexity Tracking below |
+| II | Every Feature Serves a Real Client Task | PASS | PASS | `service_records` is inert schema, permitted by the narrow exception added to Principles II and VI in constitution 1.1.0. Still listed in Complexity Tracking |
 | III | Mobile First | PASS | PASS | Client routes designed at 390px and adapted upward. Primary actions in the lower third. Bottom sheets, not full-page navigation, for create and detail flows |
 | IV | Private by Default | PASS | PASS | RLS on all six tables plus `storage.objects`. Browser holds the anon key only. Service role confined to three auth admin calls in `lib/supabase/admin.ts`, never for data access. Signed URLs at 60 seconds |
 | V | Simple Over Clever | PASS | PASS | No ORM, no state library, no component library. Framework primitives only: Server Components, Server Actions, `useOptimistic`, `useFormStatus` |
-| VI | Extensible by Structure, Not by Prediction | PASS with one exception | PASS with one exception | Five feature folders, each self-contained. The exception is `service_records`, same entry as Principle II |
+| VI | Extensible by Structure, Not by Prediction | PASS | PASS | Six feature folders, each self-contained. `service_records` falls under the same narrow schema exception |
 | VII | Nothing Blocks on the Network | PASS | PASS | `useOptimistic` on every mutation, skeletons via `loading.tsx` per route segment, revert on failure |
 | VIII | Honest States | PASS | PASS | Every route segment has a defined empty, loading and error state. Enumerated in `contracts/ui-contracts.md` |
 
-**Gate result: PASS with one recorded violation.** The violation is inherited from the
-build plan rather than introduced by this design, and is justified below.
+**Gate result: PASS.** The one conflict found at Phase 1, `service_records` being created
+with no screen, was raised by `/speckit-analyze` as finding D1 and resolved on 31 August 2026
+by amending the constitution to 1.1.0 with a narrow exception for inert schema, rather than
+by justifying it in this plan. It remains listed in Complexity Tracking so the exception stays
+visible.
 
 ## Project Structure
 
@@ -189,4 +192,4 @@ and deactivation is a distinct feature with its own actions, not part of `proper
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| `service_records` table created with no screen reaching it, contrary to Principle II and the "do not build for features that are not specified" clause of Principle VI | Section 3 of the build plan mandates it, so the Record pillar of the business has a home when it is built. It is six columns and one index, applied once by hand | Omitting the table now and adding it later was rejected by the project owner in the build plan. The cost of carrying it is close to zero: no code imports it, no query reads it, no type describes it. It is inert. Recorded here so the exception is explicit rather than silently normalised, and so that a later reviewer does not read it as licence to add further unreached tables |
+| `service_records` table created with no screen reaching it. Permitted by the narrow inert-schema exception in constitution 1.1.0; listed here as that exception requires | Section 3 of the build plan mandates it, so the Record pillar of the business has a home when it is built. It is six columns and one index, applied once by hand | Omitting the table now and adding it later was rejected by the project owner in the build plan. The cost of carrying it is close to zero: no code imports it, no query reads it, no type describes it. It is inert. Recorded here so the exception is explicit rather than silently normalised, and so that a later reviewer does not read it as licence to add further unreached tables |

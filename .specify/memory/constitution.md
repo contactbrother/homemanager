@@ -1,6 +1,6 @@
 <!--
 Sync Impact Report
-Version change: none (initial template) → 1.0.0
+Version change: 1.0.0 → 1.1.0 (see amendment note at the foot of this report)
 Rationale: First ratification. The document moves from an unfilled scaffold to a
 complete governing constitution, so it is issued at 1.0.0 rather than bumped.
 
@@ -21,6 +21,14 @@ eight, so the Core Principles section is extended to eight subsections. Heading
 levels are unchanged.
 
 Follow-up TODOs: none. No placeholder tokens remain.
+
+--- Amendment, 31 August 2026, 1.0.0 → 1.1.0 ---
+MINOR: guidance materially expanded, no principle removed or redefined.
+Principles II and VI gain a single narrow exception permitting inert schema created ahead
+of a specified feature. Raised by /speckit-analyze finding D1, which correctly held that
+justifying the service_records table in the plan's Complexity Tracking diluted Principle II
+rather than resolving it. Resolved here, in the constitution, which is the only place it
+can be resolved.
 -->
 
 # Dar Constitution
@@ -49,6 +57,15 @@ convenience, or a hypothetical user MUST NOT ship.
 
 Rationale: an unreached screen is untested, unmaintained and misleading to the next
 developer. It costs more than it appears to.
+
+**Narrow exception, added 31 August 2026.** Inert database schema MAY be created ahead of
+the feature that will use it, where that feature is named in the product plan, the schema
+is small, and nothing in the codebase reads or writes it. "Inert" is strict: no query, no
+type, no import, no screen. The `service_records` table is the sole instance at the time of
+writing. Any such table MUST be listed in the plan's Complexity Tracking with the feature it
+awaits. This exception covers schema only. It is not a licence to add unreached code, routes,
+components or actions, and a second unreached table SHOULD prompt a review of whether the
+exception is being used as intended rather than a third being added.
 
 ### III. Mobile First
 
@@ -88,6 +105,8 @@ Code MUST be organised by feature folder, each holding its own components, queri
 actions and types. Adding a feature MUST mean adding a folder and a route, not editing
 files spread across the codebase. Structure that anticipates unspecified features MUST
 NOT be built.
+
+The narrow schema exception recorded under Principle II applies here identically.
 
 Rationale: structure is cheap and prediction is expensive. Feature folders make later
 work additive without guessing what that work will be.
@@ -173,4 +192,4 @@ materially expanded. PATCH for clarifications, wording and non-semantic refineme
 complexity MUST be justified against Principle V, and any justified exception MUST be
 recorded in the relevant plan document rather than left implicit in the code.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-08-31
+**Version**: 1.1.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-08-31

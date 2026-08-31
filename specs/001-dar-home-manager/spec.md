@@ -263,6 +263,10 @@ with nothing outstanding and confirming the calm empty state.
   MUST cease to give access. A deactivated client's email address MUST be treated as
   unregistered by FR-002, including its identical on-screen response.
 
+- **FR-055**: System MUST let a team member reverse a deactivation, restoring the client's
+  access and clearing the recorded deactivation moment, so that a deactivation made in error
+  is not permanent. Reversal MUST be available from the same screen as deactivation.
+
 - **FR-047**: System MUST record the moment a client was deactivated, and MUST keep that
   client's properties, documents, tasks and files intact and reachable by the team during
   the retention period.
@@ -402,8 +406,9 @@ with nothing outstanding and confirming the calm empty state.
   content that is arriving, and MUST NOT show an indefinite loading indicator.
 - **FR-043**: System MUST state, when something fails, what happened and what the person
   should do next.
-- **FR-044**: System MUST be usable on a phone held in one hand, with every action
-  reachable by thumb.
+- **FR-044**: System MUST place the primary action of every screen within the lower third
+  of the viewport on a phone, so it is reachable by thumb on a one-handed grip. Tap targets
+  MUST be at least 44px.
 
 ### Key Entities
 
@@ -489,7 +494,9 @@ with nothing outstanding and confirming the calm empty state.
   left displaying an expiry with nothing behind it. This is a deliberate divergence from
   sections 3.2 and 3.3 of the build plan, recorded in both migration files.
 - **Service records are recorded in the data model but have no screens** in this release.
-- **English only.** No other language in this release.
+- **English only.** No other language in this release. In user-facing copy the service is
+  "the team"; "admin" is the database role and the route prefix, and MUST NOT appear in
+  anything a client reads.
 - **The scheduled deletion of a deactivated client's data is out of scope**, per FR-048.
   The 90 day retention policy is stated and the deactivation moment is recorded, so the
   clock is captured, but nothing acts on it automatically in this release. No cron job, no

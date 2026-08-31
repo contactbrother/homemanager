@@ -22,13 +22,13 @@ security for authorisation rather than checking permissions themselves. The guar
 |---|---|---|
 | `requestSignInLink` | `(email: string) => Promise<ActionResult>` | Calls `signInWithOtp` with `shouldCreateUser: false`. **Returns `{ ok: true }` whether or not the address is registered** (FR-002). Logs the distinction server side only. Never reveals which case occurred |
 | `signOut` | `() => Promise<never>` | Ends the session and redirects to `/sign-in` (FR-006) |
+| `updateProfile` | `(input: { fullName: string; phone?: string }) => Promise<ActionResult>` | The signed-in person's own row only (FR-006). Lives here, not in the properties feature: a profile is not a property |
 
 ## features/properties/actions.ts
 
 | Action | Signature | Behaviour |
 |---|---|---|
 | `createProperty` | `(input: { ownerId: string; name: string; community?: string; address?: string; photo?: File }) => Promise<ActionResult<{ id: string }>>` | Admin only by RLS. `name` required (FR-007). Photo uploaded to `{property_id}/photo/{filename}` |
-| `updateProfile` | `(input: { fullName: string; phone?: string }) => Promise<ActionResult>` | The signed-in person's own row only (FR-006) |
 
 ## features/documents/actions.ts
 
@@ -55,7 +55,7 @@ Admin only. These are the three places the service role key is used, and the onl
 |---|---|---|
 | `createClient` | `(input: { email: string; fullName: string }) => Promise<ActionResult<{ id: string }>>` | Creates the auth user through the admin API and sends their first sign-in link. The `handle_new_user` trigger creates the profile. Registers the address, which is what makes FR-002's invite-only rule possible |
 | `deactivateClient` | `(profileId: string) => Promise<ActionResult>` | Sets `deactivated_at`, then bans the auth user. Access stops immediately via middleware and `is_active()` in RLS (FR-046). Records remain reachable by the team (FR-047). Lives on `/admin/clients/[id]` |
-| `reactivateClient` | `(profileId: string) => Promise<ActionResult>` | Clears `deactivated_at` and unbans. Present because deactivation would otherwise be irreversible by mistake |
+| `reactivateClient` | `(profileId: string) => Promise<ActionResult>` | Clears `deactivated_at` and unbans, from the same screen as deactivation (FR-055) |
 
 **Not built**: anything that acts on FR-048's 90 day clock. No cron, no scheduled function, no
 recurring job. Deletion at 90 days is a manual team action in this release.
