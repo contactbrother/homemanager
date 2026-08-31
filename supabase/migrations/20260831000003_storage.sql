@@ -36,11 +36,11 @@ create policy "upload own files"
     )
   );
 
-create policy "delete own files"
+-- Deletion is a team action only, matching the documents delete policy in
+-- 20260831000002_rls.sql. A client who could delete the file but not the
+-- document row would leave a document listed with nothing behind it.
+-- Deliberate divergence from section 3.3 of the build plan. Withdrawn 31 August 2026.
+create policy "admin deletes files"
   on storage.objects for delete using (
-    bucket_id = 'dar-files' and (
-      is_admin() or (storage.foldername(name))[1] in (
-        select id::text from properties where owner_id = auth.uid()
-      )
-    )
+    bucket_id = 'dar-files' and is_admin()
   );

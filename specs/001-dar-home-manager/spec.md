@@ -8,6 +8,16 @@
 
 **Input**: User description: "Build a web app called Dar where villa owners in Dubai see everything about their home in one place, and where the team managing their home can respond." (full text in `2026-08-31_Build_Plan_Dar_Home_Manager_MVP.md`, section 2.2)
 
+## Clarifications
+
+### Session 2026-08-31
+
+- Q: How long should a sign-in link stay valid, and how many can one email address request in an hour? → A: 15 minute lifetime, single use, 5 requests per address per hour, with an identical on-screen response whether or not the address is registered
+- Q: When a client leaves the service, what happens to the documents Dar holds for them? → A: The team deactivates the client, access stops immediately, and all files and records are permanently deleted 90 days later. This is the stated policy. In this release only deactivation and the recording of the deactivation moment are built; the scheduled purge that acts on the 90 day clock is a named follow-up and is explicitly out of scope
+- Q: Can a team member move a task's status freely in any direction, including reopening one already marked done? → A: Yes. Any status may move to any other, unrestricted, with every change recorded in the task history and visible to the client
+- Q: Now that clients cannot delete documents, should they still be able to delete the underlying files in storage? → A: No. File deletion is a team action only, matching FR-019. The storage rules in 20260831000003_storage.sql were amended so a client cannot leave a document listed with nothing behind it
+- Q: What should a client see when they enter their email, no link arrives, and they are stuck on the confirmation screen? → A: A resend control enabled after 60 seconds, a line telling them to check spam, and a contact route to the team. The contact route is a WhatsApp link, not email, since WhatsApp is the channel clients already use with the team
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Team sets up a client and their home (Priority: P1)
@@ -65,22 +75,26 @@ reading the document. Delivers the core value of the product.
 **Acceptance Scenarios**:
 
 1. **Given** a client whose email is registered, **When** they enter it on the sign-in
-   screen, **Then** they are told a link has been sent and to check their email.
-2. **Given** a client who taps a valid sign-in link, **When** the link opens, **Then**
+   screen, **Then** they are told a link has been sent, told to check their spam folder,
+   and offered a WhatsApp route to the team.
+2. **Given** a client on the confirmation screen whose link has not arrived, **When** 60
+   seconds have passed, **Then** they can request another; **and before** 60 seconds have
+   passed, **Then** the resend control is unavailable.
+3. **Given** a client who taps a valid sign-in link, **When** the link opens, **Then**
    they are signed in and land on the home screen without entering a password.
-3. **Given** a signed-in client with exactly one property, **When** they open the property
+4. **Given** a signed-in client with exactly one property, **When** they open the property
    area, **Then** they go straight to that property rather than a list of one.
-4. **Given** a signed-in client with more than one property, **When** they open the
+5. **Given** a signed-in client with more than one property, **When** they open the
    property area, **Then** they see a card for each property and can choose one.
-5. **Given** a client viewing their property, **When** they open a document, **Then** the
+6. **Given** a client viewing their property, **When** they open a document, **Then** the
    file opens or downloads, and the link that served it stops working after a short period.
-6. **Given** a client viewing their property, **When** they upload a document, choose its
+7. **Given** a client viewing their property, **When** they upload a document, choose its
    type and set an expiry, **Then** it appears in the document list straight away.
-7. **Given** a client viewing a document list, **When** a document expires within the
+8. **Given** a client viewing a document list, **When** a document expires within the
    warning window, **Then** it is marked as expiring soon; **and when** a document is past
    its expiry date, **Then** it is marked more prominently as expired; **and** all other
    documents carry no status marking.
-8. **Given** a client signed in as themselves, **When** they attempt to reach another
+9. **Given** a client signed in as themselves, **When** they attempt to reach another
    client's property, document or task by any means, **Then** they are refused.
 
 ---
@@ -116,6 +130,8 @@ to a task appears in its history.
    in the task history attributed to them.
 7. **Given** a task whose status the team has changed, **When** the client opens it,
    **Then** the current status is shown along with the history of what has happened.
+8. **Given** a task the team marked done, **When** the team moves it back to in progress,
+   **Then** the client sees it as in progress and both changes appear in its history.
 
 ---
 
@@ -182,6 +198,11 @@ with nothing outstanding and confirming the calm empty state.
   create an account and tells the person to contact the team.
 - A sign-in link is expired, already used, or opened on a different device from the one
   that requested it.
+- The sign-in link never arrives, because it went to spam or because the team recorded the
+  client's address incorrectly. The client must be able to reach the team without an
+  account.
+- The same email address requests a sixth sign-in link within an hour, whether through
+  impatience or an attempt to flood the inbox.
 - A client has an account but no property yet, because setup is incomplete. The app says
   so plainly rather than showing a broken or blank home.
 - A document has no expiry date, such as a floor plan. It is never marked as expiring or
@@ -199,8 +220,17 @@ with nothing outstanding and confirming the calm empty state.
 - A client loses connectivity mid-action. The interface shows what failed and lets them
   retry rather than sitting in a dead state.
 - A client with many documents or many tasks. Lists stay usable and ordered.
-- A client is removed or their property is reassigned while they are signed in.
-- Two team members change the same task's status at the same time.
+- A client attempts to remove a stored file directly rather than through a screen, and is
+  refused, so no document can be left pointing at a file that no longer exists.
+- A client is deactivated while they are signed in, and their next action must stop
+  working rather than silently succeeding.
+- A deactivated client requests a sign-in link, and must receive the same response as any
+  unregistered address.
+- A client's property is reassigned while they are signed in.
+- Two team members change the same task's status at the same time. The last change
+  recorded wins, and both attempts appear in the history so neither is lost silently.
+- A task marked done is reopened, and any attention item the client had already cleared
+  returns to their home screen.
 - A client attempts to reach another client's data by guessing an address.
 
 ## Requirements *(mandatory)*
@@ -209,11 +239,40 @@ with nothing outstanding and confirming the calm empty state.
 
 **Access and identity**
 
-- **FR-001**: System MUST let a person sign in with an email address alone, by sending a
-  single-use link to that address, with no password at any point.
-- **FR-002**: System MUST restrict sign-in to email addresses the team has already
-  registered. An unrecognised address MUST NOT create an account, and the person MUST be
-  told to contact the team.
+- **FR-001**: System MUST authenticate a person without a password, by issuing a
+  single-use credential to a contact channel the team has already registered against that
+  person. The credential MUST expire 15 minutes after it is issued and MUST work once only.
+  A credential that is expired, already used, or superseded MUST be refused with an
+  explanation and an offer to request another. **Method in this release**: a link sent by
+  email, and no other. This requirement is deliberately worded so that a one-time code by
+  email or by phone could satisfy it later without the requirement changing. Neither is
+  built here and neither is in scope.
+- **FR-002**: System MUST restrict sign-in to contact identifiers the team has already
+  registered, an identifier being an email address in this release. An unregistered
+  identifier MUST NOT create an account. The on-screen response MUST be identical whether
+  or not the identifier is registered, so that the screen never reveals who holds an
+  account; the instruction to contact the team MUST therefore be carried in the wording
+  shown to everyone.
+
+- **FR-045**: System MUST accept at most 5 sign-in credential requests per identifier per
+  hour, and MUST refuse further requests within that hour with a message saying when the
+  person may try again.
+
+- **FR-046**: System MUST let a team member deactivate a client. From the moment of
+  deactivation the client MUST NOT be able to sign in, and any session they already hold
+  MUST cease to give access. A deactivated client's email address MUST be treated as
+  unregistered by FR-002, including its identical on-screen response.
+
+- **FR-047**: System MUST record the moment a client was deactivated, and MUST keep that
+  client's properties, documents, tasks and files intact and reachable by the team during
+  the retention period.
+
+- **FR-048**: Retention policy: a deactivated client's files and records MUST be
+  permanently deleted 90 days after deactivation. **Scope note for this release**: only
+  FR-046 and FR-047 are built. The mechanism that acts on the 90 day clock is a named
+  follow-up, deliberately excluded from this release, and MUST NOT be built here. No
+  scheduled or recurring background job is in scope. Until that follow-up exists, deletion
+  at 90 days is carried out by the team by hand.
 - **FR-003**: System MUST distinguish two roles, client and team member, and MUST record
   which role each person holds.
 - **FR-004**: System MUST prevent any client from reading or changing data belonging to
@@ -255,7 +314,9 @@ with nothing outstanding and confirming the calm empty state.
   request and expires after a short period, and MUST NOT make any file publicly reachable.
 - **FR-019**: System MUST let only a team member delete a document. A client MUST be able
   to upload a document but MUST NOT be able to delete one, including a document they
-  uploaded themselves, and no client screen MUST offer the action.
+  uploaded themselves, and no client screen MUST offer the action. This MUST hold for the
+  stored file as well as for the document record, so that a client cannot remove a file by
+  any route and leave a document listed with nothing behind it.
 - **FR-020**: System MUST refuse a file that exceeds the size limit or is of an unaccepted
   type, and MUST say what is allowed.
 
@@ -273,6 +334,36 @@ with nothing outstanding and confirming the calm empty state.
   on the client, done or cancelled, and MUST show the current status to the client.
 - **FR-026**: System MUST set a new task's status to received.
 - **FR-027**: System MUST allow only a team member to change a task's status.
+
+- **FR-049**: System MUST allow a task to move from any status to any other status without
+  restriction, including reopening a task that is done or cancelled. There is no permitted
+  transition matrix.
+
+- **FR-050**: System MUST record every status change in the task's history, showing the
+  status it moved to, who changed it and when, and MUST show that history to the client.
+
+- **FR-051**: System MUST, on the screen shown after a sign-in credential is requested,
+  tell the person it has been sent, and offer to send another. Where the channel is email,
+  the screen MUST also tell them to check their spam folder. The resend control MUST be
+  unavailable for the first 60 seconds so that repeated taps do not consume the hourly
+  allowance in FR-045.
+
+- **FR-053**: System MUST meet WCAG 2.2 AA contrast throughout: at least 4.5:1 for body
+  text, and at least 3:1 for large text, icons and the visible bounds of interactive
+  controls, measured against the surface each sits on.
+
+- **FR-054**: System MUST be fully operable by keyboard. Every action reachable by pointer
+  MUST be reachable and operable by keyboard alone, in a logical order, with a visible
+  focus indicator meeting FR-053, and no element that traps focus. This includes the bottom
+  sheets used for create and detail flows.
+
+- **FR-052**: System MUST offer, from the sign-in screens, a way to contact the team by
+  WhatsApp that works without an account, because a person who cannot sign in has no other
+  route to us. Email MUST NOT be the contact route offered, since WhatsApp is the channel
+  clients already use. The destination MUST be read from the deployment environment as
+  `NEXT_PUBLIC_SUPPORT_WHATSAPP`. It MUST NOT be hardcoded in the application, and MUST NOT
+  be entered by the person. Where the variable is unset, the contact route MUST be hidden
+  rather than rendered broken.
 - **FR-028**: System MUST let a client and a team member add a note to a task, and MUST
   show the notes as a history attributed to their authors in the order they were added.
 - **FR-029**: System MUST list a client's open tasks before their completed ones.
@@ -317,14 +408,16 @@ with nothing outstanding and confirming the calm empty state.
 ### Key Entities
 
 - **Person**: someone who can sign in. Holds a name, a phone number, an email address and
-  a role of either client or team member. Every other record traces back to one.
+  a role of either client or team member. Also holds the moment they were deactivated, if
+  they have been; an active person has none. Every other record traces back to one.
 - **Property**: a villa belonging to one client. Holds a name, and optionally a community,
   an address and a photo. A client may own several.
 - **Document**: a file held for one property. Holds a title, a type, the file itself and,
   optionally, an expiry date and notes. Records who uploaded it. Its expiry, if present,
   determines whether it is quiet, expiring soon or expired.
 - **Task**: a request raised against one property. Holds a title, optional text, an
-  optional voice note, and a status. Records who raised it and when it last changed.
+  optional voice note, and a status that may move to any other status at any time. Records
+  who raised it and when it last changed.
 - **Task note**: one entry in a task's history. Holds text or a voice note, its author and
   when it was added.
 - **Service record**: work carried out on a property, held for the home's history. Not
@@ -349,6 +442,20 @@ with nothing outstanding and confirming the calm empty state.
   signing in as two separate clients and attempting access in both directions.
 - **SC-007**: no document file is reachable without a currently valid, time-limited grant,
   verified by attempting to reuse an expired link.
+- **SC-012**: a sign-in credential stops working 15 minutes after it is issued and after a
+  single use, and a sixth request from one identifier within an hour is refused, all three
+  verified by direct attempt.
+- **SC-013**: the sign-in screen gives the same response to a registered and an
+  unregistered address, verified by submitting one of each and comparing what is shown.
+- **SC-014**: a deactivated client cannot sign in and cannot use an existing session,
+  verified by deactivating a client who is signed in and confirming their next action is
+  refused; their records remain reachable by the team.
+- **SC-015**: no document in the system points at a missing file, verified by attempting
+  file removal as a client through every available route and confirming each is refused.
+- **SC-016**: a client whose sign-in credential does not arrive can reach the team from the
+  sign-in screen without an account, in one interaction.
+- **SC-017**: every screen passes WCAG 2.2 AA contrast and can be completed end to end
+  using only a keyboard, verified per screen against FR-053 and FR-054.
 - **SC-008**: every screen presents exactly one primary action.
 - **SC-009**: every list screen and every detail screen has a defined empty state, loading
   state and error state, and none of them is blank or indefinite.
@@ -360,7 +467,7 @@ with nothing outstanding and confirming the calm empty state.
 
 ## Assumptions
 
-- **Sign-in is invite-only.** The team registers a client's email before that client can
+- **Sign-in is invite-only, and the screen does not disclose who is registered.** The team registers a client's email before that client can
   sign in. An unknown address is refused rather than being given an empty account. This
   follows from the brief's statement that a client's villa is already set up on first sign
   in.
@@ -372,13 +479,34 @@ with nothing outstanding and confirming the calm empty state.
   needs a title and the client is never asked to supply one. The team renames it when they
   triage. No automatic transcription in this release.
 - **Task status is the team's to change, never the client's.** The client can add a note
-  but cannot mark their own task done.
-- **Clients never delete documents.** Deletion is a team action only. The access rules as
-  originally drafted permitted a client to delete a document on their own property; that
-  permission has been withdrawn so the record of a home cannot be thinned by the client who
-  most relies on it.
+  but cannot mark their own task done. The team may move a task to any status at any time,
+  including reopening a completed one, because a vendor's repair that fails a week later is
+  the same request rather than a new one. The history is what keeps this honest.
+- **Clients never delete documents or files.** Deletion is a team action only. The access
+  rules as originally drafted permitted a client to delete both a document on their own
+  property and the file behind it; both permissions have been withdrawn so the record of a
+  home cannot be thinned by the client who most relies on it, and so no document can be
+  left displaying an expiry with nothing behind it. This is a deliberate divergence from
+  sections 3.2 and 3.3 of the build plan, recorded in both migration files.
 - **Service records are recorded in the data model but have no screens** in this release.
 - **English only.** No other language in this release.
+- **The scheduled deletion of a deactivated client's data is out of scope**, per FR-048.
+  The 90 day retention policy is stated and the deactivation moment is recorded, so the
+  clock is captured, but nothing acts on it automatically in this release. No cron job, no
+  scheduled function, no recurring background task is to be built. Deletion at 90 days is a
+  manual team action until the follow-up ships.
+- **The WhatsApp contact destination is a configured value, not yet supplied.** FR-052
+  requires a single WhatsApp destination, read from `NEXT_PUBLIC_SUPPORT_WHATSAPP`. The
+  number has not been provided and MUST NOT be invented; it is supplied before launch. The
+  variable is public by design: the sign-in screen needs it before any session exists, and
+  a support number is not a secret.
+- **Accessibility is WCAG 2.2 AA contrast and keyboard operability, and nothing further.**
+  Screen reader labelling beyond what semantic markup gives for free, reduced-motion
+  handling, and text resizing beyond browser default are out of scope for this release.
+- **Authentication requirements are worded by method, not by channel.** Magic link by email
+  is the only method built. FR-001, FR-002, FR-045 and FR-051 are phrased so that a one-time
+  code by email or phone would satisfy them unchanged, should either be added later. Adding
+  one is not in scope and no groundwork for it is to be built.
 - **Notifications are out of scope.** Nothing is pushed, emailed or messaged to a client.
   Attention items are seen when the client opens the app. The only email sent is the
   sign-in link.
