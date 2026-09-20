@@ -4,39 +4,89 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/supabase/types";
+import { MIN_PASSWORD_LENGTH } from "@/lib/constants";
 
 /**
- * FR-001, FR-002.
+ * FR-001 (revised). Email and password sign-in.
  *
- * `shouldCreateUser: false` is what makes sign-in invite-only: without it Supabase
- * creates an auth user for any address, which would give a stranger an account and an
- * empty app.
- *
- * The identical-response half of FR-002 is this function's job, not the platform's.
- * Supabase returns a distinguishable error for an unregistered address, so we swallow
- * the difference here and return the same result either way. The screen must never
- * reveal who holds an account.
+ * The magic-link flow was replaced because the built-in mailer's hourly allowance made
+ * testing impractical and links opened in a different browser could not complete the
+ * PKCE exchange. The identical-response rule from FR-002 is kept in spirit: a wrong
+ * password and an unknown address produce the same message.
  */
-export async function requestSignInLink(email: string): Promise<ActionResult> {
-  const address = email.trim().toLowerCase();
+export async function signInWithPassword(input: {
+  email: string;
+  password: string;
+}): Promise<ActionResult> {
+  const email = input.email.trim().toLowerCase();
+  const password = input.password;
 
-  if (!address || !address.includes("@")) {
+  if (!email || !email.includes("@")) {
     return fail("That does not look like an email address.");
+  }
+  if (!password) return fail("Enter your password.");
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    console.info("[sign-in] refused", { reason: error.message });
+    return fail("Email or password is incorrect.");
+  }
+
+  // Middleware routes to /admin or / by role on the next request.
+  redirect("/");
+}
+
+/**
+ * Self-service sign-up. Every account created here is a client; the
+ * `handle_new_user` trigger creates the profile row from the `full_name` metadata,
+ * and admin is only ever granted by the team directly in the database.
+ *
+ * When "Confirm email" is on in Supabase, sign-up returns a user with no session and
+ * the person must click the emailed link first. The form explains that case.
+ */
+export async function signUpWithPassword(input: {
+  fullName: string;
+  email: string;
+  password: string;
+}): Promise<ActionResult<{ needsConfirmation: boolean }>> {
+  const fullName = input.fullName.trim();
+  const email = input.email.trim().toLowerCase();
+  const password = input.password;
+
+  if (!fullName) return fail("Give us a name to call you by.");
+  if (!email || !email.includes("@")) {
+    return fail("That does not look like an email address.");
+  }
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return fail(`Use a password of at least ${MIN_PASSWORD_LENGTH} characters.`);
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithOtp({
-    email: address,
-    options: { shouldCreateUser: false },
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: fullName } },
   });
 
   if (error) {
-    // Logged server side only. Never surfaced, never returned.
-    console.info("[sign-in] request not fulfilled", { reason: error.message });
+    console.info("[sign-up] refused", { reason: error.message });
+    if (error.message.toLowerCase().includes("already")) {
+      return fail("That email address already has an account. Sign in instead.");
+    }
+    return fail("We could not create your account. Try again.");
   }
 
-  // Deliberately identical whether or not the address is registered.
-  return ok();
+  // Supabase returns a user with an empty identities list when the address is already
+  // registered and confirmation is on, rather than an error. Treat it as taken.
+  if (data.user && data.user.identities?.length === 0) {
+    return fail("That email address already has an account. Sign in instead.");
+  }
+
+  if (!data.session) return ok({ needsConfirmation: true });
+
+  redirect("/");
 }
 
 export async function signOut(): Promise<never> {

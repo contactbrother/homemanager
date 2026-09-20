@@ -5,8 +5,8 @@ export const EXPIRY_WARNING_DAYS = 30;
 /** How long a signed file URL stays valid, in seconds. FR-018. */
 export const SIGNED_URL_TTL = 60;
 
-/** How long the resend control stays locked on the sign-in confirmation screen. FR-051. */
-export const RESEND_LOCK_SECONDS = 60;
+/** Minimum password length for sign-up. Matches the Supabase project default. */
+export const MIN_PASSWORD_LENGTH = 6;
 
 /** Maximum upload size, matching the bucket limit in migration 3. FR-020. */
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;

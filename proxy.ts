@@ -47,7 +47,9 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isPublic =
-    path.startsWith("/sign-in") || path.startsWith("/auth/callback");
+    path.startsWith("/sign-in") ||
+    path.startsWith("/sign-up") ||
+    path.startsWith("/auth/callback");
 
   if (!user) {
     if (isPublic) return response;

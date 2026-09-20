@@ -27,8 +27,8 @@ export default async function SignInPage({
 
         {params.error === "link" ? (
           <p className="mt-6 text-[var(--alert)]">
-            That link has expired or has already been used. Enter your email and we
-            will send another.
+            That link has expired or has already been used. Sign in with your email
+            and password instead.
           </p>
         ) : null}
       </div>
