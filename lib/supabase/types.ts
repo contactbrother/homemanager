@@ -1,7 +1,7 @@
 /** Hand-written to match `supabase/migrations/`. There is no ORM and no codegen step,
  *  per Principle V, so this file is the one place the schema is described to TypeScript.
  *  Keep it in step with the migrations by hand. */
-import type { DocumentType, TaskStatus } from "@/lib/constants";
+import type { DocumentType, TaskPriority, TaskStatus } from "@/lib/constants";
 
 export type UserRole = "client" | "admin";
 
@@ -46,6 +46,7 @@ export interface Task {
   body: string | null;
   voice_path: string | null;
   status: TaskStatus;
+  priority: TaskPriority;
   created_at: string;
   updated_at: string;
 }

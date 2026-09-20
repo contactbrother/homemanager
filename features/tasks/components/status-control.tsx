@@ -1,9 +1,16 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
-import { renameTask, setTaskStatus } from "@/features/tasks/actions";
+import { renameTask, setTaskPriority, setTaskStatus } from "@/features/tasks/actions";
 import { Button } from "@/components/ui/button";
-import { TASK_STATUSES, TASK_STATUS_LABELS_TEAM, type TaskStatus } from "@/lib/constants";
+import {
+  TASK_PRIORITIES,
+  TASK_PRIORITY_LABELS,
+  TASK_STATUSES,
+  TASK_STATUS_LABELS_TEAM,
+  type TaskPriority,
+  type TaskStatus,
+} from "@/lib/constants";
 
 /**
  * FR-049. Any status to any status, including reopening. No transition rules, so this
@@ -14,13 +21,16 @@ import { TASK_STATUSES, TASK_STATUS_LABELS_TEAM, type TaskStatus } from "@/lib/c
 export function StatusControl({
   taskId,
   status,
+  priority,
   title,
 }: {
   taskId: string;
   status: TaskStatus;
+  priority: TaskPriority;
   title: string;
 }) {
   const [optimistic, setOptimistic] = useOptimistic(status);
+  const [optimisticPriority, setOptimisticPriority] = useOptimistic(priority);
   const [error, setError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [draftTitle, setDraftTitle] = useState(title);
@@ -36,6 +46,15 @@ export function StatusControl({
       const result = await setTaskStatus({ taskId, status: next });
       // On failure the optimistic value is discarded when the transition ends,
       // so the pill returns to the server's value on its own. FR-041.
+      if (!result.ok) setError(result.error);
+    });
+  }
+
+  function changePriority(next: TaskPriority) {
+    setError(null);
+    start(async () => {
+      setOptimisticPriority(next);
+      const result = await setTaskPriority({ taskId, priority: next });
       if (!result.ok) setError(result.error);
     });
   }
@@ -66,6 +85,21 @@ export function StatusControl({
           {TASK_STATUSES.map((value) => (
             <option key={value} value={value}>
               {TASK_STATUS_LABELS_TEAM[value]}
+            </option>
+          ))}
+        </select>
+
+        <label htmlFor="priority">Priority</label>
+        <select
+          id="priority"
+          value={optimisticPriority}
+          disabled={pending}
+          onChange={(e) => changePriority(e.target.value as TaskPriority)}
+          className="min-h-[44px] px-4 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]"
+        >
+          {TASK_PRIORITIES.map((value) => (
+            <option key={value} value={value}>
+              {TASK_PRIORITY_LABELS[value]}
             </option>
           ))}
         </select>

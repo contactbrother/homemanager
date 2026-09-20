@@ -5,17 +5,19 @@ import { useRouter } from "next/navigation";
 import { createTask } from "@/features/tasks/actions";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
-import { VoiceRecorder } from "@/components/ui/voice-recorder";
+import { PriorityPicker } from "./priority-picker";
+import type { TaskPriority } from "@/lib/constants";
 import type { Property } from "@/lib/supabase/types";
 
 /**
- * FR-024, FR-030. The client is never asked to categorise or prioritise. The property
- * selector appears only when there is more than one to choose between.
+ * FR-024, FR-030, revised. A request is a title, optional detail and a priority.
+ * The property selector appears only when there is more than one to choose between.
  */
 export function NewTaskSheet({ properties }: { properties: Property[] }) {
   const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [voice, setVoice] = useState<File | null>(null);
+  const [priority, setPriority] = useState<TaskPriority>("normal");
   const [propertyId, setPropertyId] = useState(properties[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -23,13 +25,14 @@ export function NewTaskSheet({ properties }: { properties: Property[] }) {
 
   if (properties.length === 0) return null;
 
-  function send(withVoice: File | null) {
+  function send() {
     setError(null);
     start(async () => {
       const result = await createTask({
         propertyId: propertyId || properties[0].id,
+        title,
         body,
-        voice: withVoice,
+        priority,
       });
       if (!result.ok) {
         setError(result.error);
@@ -37,17 +40,24 @@ export function NewTaskSheet({ properties }: { properties: Property[] }) {
       }
       navigator.vibrate?.(12);
       setOpen(false);
+      setTitle("");
       setBody("");
-      setVoice(null);
+      setPriority("normal");
       router.refresh();
     });
   }
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Ask for something</Button>
-      <Sheet open={open} onClose={() => setOpen(false)} title="Ask for something">
-        <div className="space-y-4">
+      <Button onClick={() => setOpen(true)}>Request something</Button>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Request something">
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            send();
+          }}
+        >
           {properties.length > 1 ? (
             <div>
               <label htmlFor="property" className="block mb-2">
@@ -57,7 +67,7 @@ export function NewTaskSheet({ properties }: { properties: Property[] }) {
                 id="property"
                 value={propertyId}
                 onChange={(e) => setPropertyId(e.target.value)}
-                className="w-full min-h-[44px] px-4 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]"
+                className="w-full min-h-[44px] px-4"
               >
                 {properties.map((property) => (
                   <option key={property.id} value={property.id}>
@@ -69,31 +79,36 @@ export function NewTaskSheet({ properties }: { properties: Property[] }) {
           ) : null}
 
           <div>
-            <label htmlFor="body" className="block mb-2">
-              What do you need?
+            <label htmlFor="title" className="block mb-2">
+              What is it?
             </label>
-            <textarea
-              id="body"
-              rows={4}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              className="w-full px-4 py-3 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]"
+            <input
+              id="title"
+              type="text"
+              required
+              maxLength={80}
+              placeholder="AC not cooling in master bedroom"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full min-h-[44px] px-4"
             />
           </div>
 
-          {/* Release sends immediately: a voice note needs no second step. */}
-          <VoiceRecorder
-            disabled={pending}
-            onRecorded={(file) => {
-              if (!file) return;
-              setVoice(file);
-              send(file);
-            }}
-          />
+          <div>
+            <label htmlFor="body" className="block mb-2">
+              Anything else we should know?{" "}
+              <span className="text-[var(--mute)]">Optional</span>
+            </label>
+            <textarea
+              id="body"
+              rows={3}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              className="w-full px-4 py-3"
+            />
+          </div>
 
-          {voice ? (
-            <p className="text-[var(--mute)]">Voice note attached.</p>
-          ) : null}
+          <PriorityPicker value={priority} onChange={setPriority} />
 
           {error ? (
             <p role="alert" className="text-[var(--alert)]">
@@ -101,15 +116,10 @@ export function NewTaskSheet({ properties }: { properties: Property[] }) {
             </p>
           ) : null}
 
-          <Button
-            type="button"
-            thumb
-            disabled={pending}
-            onClick={() => send(voice)}
-          >
-            {pending ? "Sending" : "Send"}
+          <Button type="submit" thumb disabled={pending}>
+            {pending ? "Sending" : "Send request"}
           </Button>
-        </div>
+        </form>
       </Sheet>
     </>
   );

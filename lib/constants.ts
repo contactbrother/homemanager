@@ -84,6 +84,32 @@ export const TASK_STATUS_LABELS_TEAM: Record<TaskStatus, string> = {
   waiting_on_client: "Waiting on client",
 };
 
+export const TASK_PRIORITIES = ["low", "normal", "high", "emergency"] as const;
+export type TaskPriority = (typeof TASK_PRIORITIES)[number];
+
+export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
+  low: "Low",
+  normal: "Normal",
+  high: "High",
+  emergency: "Emergency",
+};
+
+/** One line the client reads while choosing. Plain, no jargon. */
+export const TASK_PRIORITY_HINTS: Record<TaskPriority, string> = {
+  low: "Whenever convenient",
+  normal: "Within a few days",
+  high: "Today or tomorrow",
+  emergency: "Right now: leak, no power, locked out",
+};
+
+/** Lower sorts first in the queue. */
+export const TASK_PRIORITY_RANK: Record<TaskPriority, number> = {
+  emergency: 0,
+  high: 1,
+  normal: 2,
+  low: 3,
+};
+
 /** A task is open until it is done or cancelled. FR-029. */
 export const OPEN_TASK_STATUSES: TaskStatus[] = [
   "received",

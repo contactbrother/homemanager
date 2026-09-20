@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { TASK_STATUS_LABELS, OPEN_TASK_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { VoiceNote } from "@/features/tasks/components/voice-note";
+import { PriorityPill } from "@/features/tasks/components/priority-pill";
 
 export default async function TaskPage({
   params,
@@ -34,6 +35,7 @@ export default async function TaskPage({
         >
           {TASK_STATUS_LABELS[task.status]}
         </StatusPill>
+        <PriorityPill priority={task.priority} />
         <span className="text-[var(--mute)]">{formatDate(task.created_at)}</span>
       </div>
 

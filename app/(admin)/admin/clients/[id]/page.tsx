@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatusPill } from "@/components/ui/status-pill";
 import { TASK_STATUS_LABELS_TEAM } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { PriorityPill } from "@/features/tasks/components/priority-pill";
 
 export default async function AdminClientPage({
   params,
@@ -82,7 +83,10 @@ export default async function AdminClientPage({
                         className="flex items-center justify-between gap-3 p-4 min-h-[44px]"
                       >
                         <span>{task.title}</span>
-                        <StatusPill>{TASK_STATUS_LABELS_TEAM[task.status]}</StatusPill>
+                        <span className="flex shrink-0 gap-1.5">
+                          <PriorityPill priority={task.priority} />
+                          <StatusPill>{TASK_STATUS_LABELS_TEAM[task.status]}</StatusPill>
+                        </span>
                       </Link>
                     </Card>
                   ))}

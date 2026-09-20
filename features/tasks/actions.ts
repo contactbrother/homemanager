@@ -4,34 +4,29 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/supabase/types";
 import {
-  MAX_FILE_BYTES,
   SIGNED_URL_TTL,
   STORAGE_BUCKET,
+  TASK_PRIORITIES,
+  type TaskPriority,
   type TaskStatus,
 } from "@/lib/constants";
-import { formatDate } from "@/lib/format";
-import { safeName } from "@/lib/storage";
 
 /**
- * FR-021 to FR-026.
- *
- * A task needs either text or a voice note, never neither. Where only a voice note is
- * given, the title is generated: the client is never asked to name, categorise or
- * organise anything, and the team renames it when they triage.
+ * FR-021 to FR-026, revised. A request is a short title, optional detail and a
+ * priority the client chooses. The team may re-triage the priority afterwards.
  */
 export async function createTask(input: {
   propertyId: string;
+  title: string;
   body?: string;
-  voice?: File | null;
+  priority: TaskPriority;
 }): Promise<ActionResult<{ id: string }>> {
+  const title = input.title.trim().slice(0, 80);
   const body = input.body?.trim() || null;
-  const voice = input.voice && input.voice.size > 0 ? input.voice : null;
 
-  if (!body && !voice) {
-    return fail("Write what you need, or record a voice note.");
-  }
-  if (voice && voice.size > MAX_FILE_BYTES) {
-    return fail("That recording is too long. Try a shorter one.");
+  if (!title) return fail("Give your request a short title.");
+  if (!TASK_PRIORITIES.includes(input.priority)) {
+    return fail("Choose how urgent this is.");
   }
 
   const supabase = await createClient();
@@ -40,55 +35,33 @@ export async function createTask(input: {
   } = await supabase.auth.getUser();
   if (!user) return fail("You are not signed in.");
 
-  const title = body
-    ? body.split("\n")[0].slice(0, 80)
-    : `Voice note, ${formatDate(new Date())}`;
+  const { data: row, error } = await supabase
+    .from("tasks")
+    .insert({
+      property_id: input.propertyId,
+      created_by: user.id,
+      title,
+      body,
+      status: "received",
+      priority: input.priority,
+    })
+    .select("id")
+    .single();
 
-  // The id is chosen here so the recording can be stored under it before the row
-  // exists. Clients may insert tasks but not update them (policy), so the path has to
-  // travel with the insert rather than follow it.
-  const id = crypto.randomUUID();
-  let voicePath: string | null = null;
-
-  if (voice) {
-    const path = `${input.propertyId}/${id}/${safeName(voiceName(voice))}`;
-    const { error: uploadError } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(path, voice, { contentType: voice.type });
-
-    if (uploadError) {
-      console.error("[task] voice upload failed", uploadError.message);
-      // A voice-only task with no recording behind it would be an empty task.
-      if (!body) return fail("That recording did not send. Try again.");
-    } else {
-      voicePath = path;
-    }
-  }
-
-  const { error } = await supabase.from("tasks").insert({
-    id,
-    property_id: input.propertyId,
-    created_by: user.id,
-    title,
-    body,
-    status: "received",
-    voice_path: voicePath,
-  });
-
-  if (error) {
-    console.error("[task] insert failed", error.message);
-    if (voicePath) await supabase.storage.from(STORAGE_BUCKET).remove([voicePath]);
+  if (error || !row) {
+    console.error("[task] insert failed", error?.message);
     return fail("That did not send. Try again.");
   }
 
   revalidatePath("/tasks");
   revalidatePath("/");
-  return ok({ id });
+  revalidatePath("/admin/tasks");
+  return ok({ id: row.id });
 }
 
 /**
- * A short-lived signed URL for a recording. The storage policies decide who may read
- * the file, so this returns nothing useful to anyone the task is not theirs to see.
+ * A short-lived signed URL for a recording made before voice notes were retired.
+ * The storage policies decide who may read the file.
  */
 export async function getVoiceUrl(path: string): Promise<ActionResult<{ url: string }>> {
   const supabase = await createClient();
@@ -103,12 +76,10 @@ export async function getVoiceUrl(path: string): Promise<ActionResult<{ url: str
 /** FR-028. Client or team. */
 export async function addTaskNote(input: {
   taskId: string;
-  body?: string;
-  voice?: File | null;
+  body: string;
 }): Promise<ActionResult> {
-  const body = input.body?.trim() || null;
-  const voice = input.voice && input.voice.size > 0 ? input.voice : null;
-  if (!body && !voice) return fail("Write a note, or record one.");
+  const body = input.body.trim();
+  if (!body) return fail("Write a note first.");
 
   const supabase = await createClient();
   const {
@@ -116,27 +87,10 @@ export async function addTaskNote(input: {
   } = await supabase.auth.getUser();
   if (!user) return fail("You are not signed in.");
 
-  const { data: task } = await supabase
-    .from("tasks")
-    .select("property_id")
-    .eq("id", input.taskId)
-    .maybeSingle();
-  if (!task) return fail("We could not find that task.");
-
-  let voicePath: string | null = null;
-  if (voice) {
-    const path = `${task.property_id}/${input.taskId}/${Date.now()}-${safeName(voiceName(voice))}`;
-    const { error } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(path, voice, { contentType: voice.type });
-    if (!error) voicePath = path;
-  }
-
   const { error } = await supabase.from("task_messages").insert({
     task_id: input.taskId,
     author_id: user.id,
     body,
-    voice_path: voicePath,
   });
 
   if (error) return fail("That note did not send. Try again.");
@@ -186,7 +140,28 @@ export async function setTaskStatus(input: {
   return ok();
 }
 
-/** FR-023. Lets the team replace a generated voice-note title at triage. */
+/** Team only by policy. Re-triage a client's chosen priority. */
+export async function setTaskPriority(input: {
+  taskId: string;
+  priority: TaskPriority;
+}): Promise<ActionResult> {
+  if (!TASK_PRIORITIES.includes(input.priority)) return fail("Choose a priority.");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("tasks")
+    .update({ priority: input.priority })
+    .eq("id", input.taskId);
+
+  if (error) return fail("That priority did not change. Try again.");
+
+  revalidatePath(`/tasks/${input.taskId}`);
+  revalidatePath(`/admin/tasks/${input.taskId}`);
+  revalidatePath("/admin/tasks");
+  return ok();
+}
+
+/** FR-023. Lets the team correct a title at triage. */
 export async function renameTask(input: {
   taskId: string;
   title: string;
@@ -204,16 +179,4 @@ export async function renameTask(input: {
 
   revalidatePath(`/admin/tasks/${input.taskId}`);
   return ok();
-}
-
-function voiceName(file: File): string {
-  if (file.name && file.name !== "blob") return file.name;
-  const extension = file.type.includes("mp4")
-    ? "m4a"
-    : file.type.includes("ogg")
-      ? "ogg"
-      : file.type.includes("mpeg")
-        ? "mp3"
-        : "webm";
-  return `voice-note.${extension}`;
 }

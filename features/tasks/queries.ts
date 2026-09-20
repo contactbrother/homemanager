@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { OPEN_TASK_STATUSES, type TaskStatus } from "@/lib/constants";
+import {
+  OPEN_TASK_STATUSES,
+  TASK_PRIORITY_RANK,
+  type TaskPriority,
+  type TaskStatus,
+} from "@/lib/constants";
 import type { Task, TaskMessageWithAuthor, TaskWithProperty } from "./types";
 
 /** FR-029. Open tasks before completed ones, newest first within each group. */
@@ -64,8 +69,13 @@ export async function listTaskHistory(
   return (data as TaskMessageWithAuthor[]) ?? [];
 }
 
-function sortOpenFirst<T extends { status: TaskStatus }>(rows: T[]): T[] {
-  const open = rows.filter((t) => OPEN_TASK_STATUSES.includes(t.status));
+/** Open before closed; within open, emergency and high first, then most recent. */
+function sortOpenFirst<T extends { status: TaskStatus; priority: TaskPriority }>(
+  rows: T[],
+): T[] {
+  const open = rows
+    .filter((t) => OPEN_TASK_STATUSES.includes(t.status))
+    .sort((a, b) => TASK_PRIORITY_RANK[a.priority] - TASK_PRIORITY_RANK[b.priority]);
   const closed = rows.filter((t) => !OPEN_TASK_STATUSES.includes(t.status));
   return [...open, ...closed];
 }

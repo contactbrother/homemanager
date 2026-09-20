@@ -5,6 +5,7 @@ import { NewTaskSheet } from "@/features/tasks/components/new-task-sheet";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusPill } from "@/components/ui/status-pill";
+import { PriorityPill } from "@/features/tasks/components/priority-pill";
 import { TASK_STATUS_LABELS, OPEN_TASK_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 
@@ -26,6 +27,8 @@ export default async function TasksPage() {
               <Link href={`/tasks/${task.id}`} className="block p-4 min-h-[44px]">
                 <div className="flex items-start justify-between gap-3">
                   <span className="font-medium">{task.title}</span>
+                  <span className="flex shrink-0 gap-1.5">
+                  <PriorityPill priority={task.priority} />
                   <StatusPill
                     tone={
                       task.status === "waiting_on_client"
@@ -37,6 +40,7 @@ export default async function TasksPage() {
                   >
                     {TASK_STATUS_LABELS[task.status]}
                   </StatusPill>
+                  </span>
                 </div>
                 <span className="mt-1 block text-[var(--mute)]">
                   {formatDate(task.created_at)}

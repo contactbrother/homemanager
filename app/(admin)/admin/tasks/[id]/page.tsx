@@ -36,7 +36,12 @@ export default async function AdminTaskPage({
       ) : null}
 
       <div className="mt-6">
-        <StatusControl taskId={id} status={task.status} title={task.title} />
+        <StatusControl
+          taskId={id}
+          status={task.status}
+          priority={task.priority}
+          title={task.title}
+        />
       </div>
 
       <h2 className="mt-8 text-[length:var(--text-heading)]">History</h2>
