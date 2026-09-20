@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { ACTOR_CACHE_COOKIE as CACHE_COOKIE } from "@/lib/constants";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/env";
 
 /**
 /* Next 16 renamed the middleware convention to proxy; the file does the same job.
@@ -20,8 +21,8 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {

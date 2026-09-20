@@ -116,7 +116,7 @@ export function SignUpForm() {
         Already have an account?{" "}
         <Link
           href="/sign-in"
-          className="text-[var(--gold-text)] underline underline-offset-4 inline-flex min-h-[44px] items-center"
+          className="text-[var(--accent-text)] underline underline-offset-4 inline-flex min-h-[44px] items-center"
         >
           Sign in
         </Link>

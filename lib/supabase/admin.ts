@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
+import { requiredEnv } from "@/lib/env";
 
 /**
  * The service role client.
@@ -16,8 +17,8 @@ import { createClient } from "@supabase/supabase-js";
  */
 function adminAuth() {
   const client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    requiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     { auth: { autoRefreshToken: false, persistSession: false } },
   );
   return client.auth.admin;

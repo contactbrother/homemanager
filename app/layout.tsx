@@ -17,12 +17,17 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Dar",
+  title: { default: "Dar", template: "%s · Dar" },
   description: "Everything about your home, in one place.",
+  applicationName: "Dar",
+  // A private service for known clients. Search engines have no business here.
+  robots: { index: false, follow: false },
+  appleWebApp: { capable: true, title: "Dar", statusBarStyle: "default" },
+  icons: { icon: "/icon.png", apple: "/apple-icon.png" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F7F3EC",
+  themeColor: "#FFFFFF",
   width: "device-width",
   initialScale: 1,
 };

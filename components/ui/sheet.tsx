@@ -22,6 +22,11 @@ export function Sheet({
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const opener = useRef<HTMLElement | null>(null);
+  // Callers pass an inline arrow, which is a new function on every render. If the
+  // effect below depended on it, every keystroke in the sheet would tear down and
+  // re-run the focus management, which on a phone dismisses the keyboard.
+  const close = useRef(onClose);
+  close.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -43,7 +48,7 @@ export function Sheet({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        close.current();
         return;
       }
       if (event.key !== "Tab") return;
@@ -71,7 +76,7 @@ export function Sheet({
       document.body.style.overflow = previousOverflow;
       opener.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

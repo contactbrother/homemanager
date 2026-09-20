@@ -12,7 +12,7 @@ export function SupportLink({ className = "" }: { className?: string }) {
     <p className={className}>
       <a
         href={`https://wa.me/${number}`}
-        className="text-[var(--gold-text)] underline underline-offset-4 inline-flex min-h-[44px] items-center"
+        className="text-[var(--accent-text)] underline underline-offset-4 inline-flex min-h-[44px] items-center"
       >
         Message the team on WhatsApp
       </a>

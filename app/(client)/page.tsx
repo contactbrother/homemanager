@@ -51,7 +51,7 @@ export default async function HomePage() {
       )}
 
       {/* FR-034. One primary action, reachable without navigating first. */}
-      <div className="fixed bottom-[56px] inset-x-0 border-t border-[var(--line)] bg-[var(--ivory)]">
+      <div className="fixed bottom-[56px] inset-x-0 border-t border-[var(--line)] bg-[var(--surface)]">
         <div className="mx-auto max-w-md px-5 py-3">
           <NewTaskSheet properties={properties} />
         </div>

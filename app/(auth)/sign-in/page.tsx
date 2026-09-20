@@ -13,7 +13,10 @@ export default async function SignInPage({
   return (
     <main className="min-h-dvh flex flex-col px-6 py-10 max-w-md w-full mx-auto">
       <div className="flex-1 flex flex-col justify-center">
-        <h1 className="text-[length:var(--text-display)]">Dar</h1>
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-[var(--r-md)] bg-[var(--accent)] text-white font-display text-[length:var(--text-heading)] font-semibold" aria-hidden="true">
+          D
+        </div>
+        <h1 className="mt-6 text-[length:var(--text-display)]">Dar</h1>
         <p className="mt-2 text-[var(--ink-soft)]">
           Everything about your home, in one place.
         </p>

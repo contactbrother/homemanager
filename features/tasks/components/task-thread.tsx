@@ -28,7 +28,7 @@ export function TaskThread({
   return (
     <>
       <TaskHistory entries={optimistic} audience={audience} />
-      <div className="fixed bottom-[56px] inset-x-0 border-t border-[var(--line)] bg-[var(--ivory)] sm:static sm:border-0 sm:bg-transparent sm:mt-6">
+      <div className="fixed bottom-[56px] inset-x-0 border-t border-[var(--line)] bg-[var(--surface)] sm:static sm:border-0 sm:bg-transparent sm:mt-6">
         <div className="mx-auto max-w-md px-5 py-3 sm:px-0">
           <AddNote
             taskId={taskId}

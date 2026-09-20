@@ -7,38 +7,50 @@
    ============================================ */
 
 :root {
-  /* Colour */
-  --ink:        #132A24;  /* deep forest, primary text and dark surfaces */
-  --ink-soft:   #3C4B45;  /* secondary text */
-  --gold:       #B8894A;  /* primary action FILL ONLY, never text or icons */
-  --gold-text:  #8F6631;  /* the same gold, darkened for text and icons on light */
-  --ivory:      #F7F3EC;  /* app background */
+  /* Colour. White surfaces, near-black ink, one signal green for action and
+     status. Contrast: ink on white 18:1, accent on white 5.9:1, white on accent 5.9:1. */
+  --ink:        #0B1411;  /* primary text */
+  --ink-soft:   #3A4441;  /* secondary text */
+  --mute:       #5F6A66;  /* tertiary text, 5.6:1 on white */
+  --accent:     #0B7A4B;  /* primary action fill, links, active state */
+  --accent-text:#086A41;  /* accent for text on white */
+  --accent-soft:#E4F3EB;  /* accent tint for active nav and ok pills */
+  --bg:         #FFFFFF;  /* page */
   --surface:    #FFFFFF;  /* cards */
-  --line:       #E2DACB;  /* borders and dividers, decorative only */
-  --mute:       #63706B;  /* tertiary text */
+  --surface-2:  #F4F6F5;  /* inset areas, inputs at rest */
+  --line:       #D5DBD8;  /* borders, strong enough to read as edges */
+  --line-strong:#0B1411;  /* emphasised borders */
 
-  /* Status, used sparingly */
-  --ok:      #2F6F52;
-  --warn:    #8F6631;   /* same gold as --gold-text, deliberate */
-  --alert:   #A4462F;
+  /* Status */
+  --ok:         #0B7A4B;
+  --ok-soft:    #E4F3EB;
+  --warn:       #A05A00;
+  --warn-soft:  #FFF1DB;
+  --alert:      #C81E1E;
+  --alert-soft: #FDE8E8;
 
-  /* Radius */
-  --r-sm: 8px;
-  --r-md: 14px;
-  --r-lg: 20px;
+  /* Names kept from the first palette so existing markup keeps working. */
+  --gold:       var(--accent);
+  --gold-text:  var(--accent-text);
+  --ivory:      var(--bg);
+
+  /* Radius: tight. */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
 
   /* Motion */
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
-  --fast: 180ms;
-  --base: 260ms;
+  --fast: 140ms;
+  --base: 220ms;
 }
 
 @theme inline {
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
-  --color-gold: var(--gold);
-  --color-gold-text: var(--gold-text);
-  --color-ivory: var(--ivory);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-line: var(--line);
   --color-mute: var(--mute);
@@ -69,7 +81,7 @@ html {
 }
 
 body {
-  background: var(--ivory);
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-inter), system-ui, sans-serif;
   font-size: var(--text-body);
@@ -82,12 +94,31 @@ body {
 
 h1, h2, h3 {
   font-family: var(--font-fraunces), Georgia, serif;
-  line-height: 1.2;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
+
+input, textarea, select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+::placeholder { color: var(--mute); }
+
+a { text-underline-offset: 3px; }
 
 /* Focus is always visible and meets the 3:1 contrast rule (FR-054). */
 :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-sm);
 }
