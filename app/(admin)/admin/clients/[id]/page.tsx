@@ -4,6 +4,12 @@ import { getClient } from "@/features/clients/queries";
 import { listPropertiesForOwner } from "@/features/properties/queries";
 import { listDocuments } from "@/features/documents/queries";
 import { listTasksForProperty } from "@/features/tasks/queries";
+import { listAssets } from "@/features/assets/queries";
+import { listVendors } from "@/features/vendors/queries";
+import { AssetList } from "@/features/assets/components/asset-list";
+import { AssetSheet } from "@/features/assets/components/asset-sheet";
+import { PropertyDetails } from "@/features/properties/components/property-details";
+import { PropertyProfileSheet } from "@/features/properties/components/property-profile-sheet";
 import { CreatePropertySheet } from "@/features/clients/components/create-property-sheet";
 import { DeactivateControl } from "@/features/clients/components/deactivate-control";
 import { DocumentList } from "@/features/documents/components/document-list";
@@ -23,13 +29,16 @@ export default async function AdminClientPage({
   const client = await getClient(id);
   if (!client) notFound();
 
-  const properties = await listPropertiesForOwner(id);
+  const [properties, vendors] = await Promise.all([listPropertiesForOwner(id), listVendors()]);
   const sections = await Promise.all(
-    properties.map(async (property) => ({
-      property,
-      documents: await listDocuments(property.id),
-      tasks: await listTasksForProperty(property.id),
-    })),
+    properties.map(async (property) => {
+      const [documents, tasks, assets] = await Promise.all([
+        listDocuments(property.id),
+        listTasksForProperty(property.id),
+        listAssets(property.id),
+      ]);
+      return { property, documents, tasks, assets };
+    }),
   );
 
   return (
@@ -54,15 +63,15 @@ export default async function AdminClientPage({
         <EmptyState>No properties yet.</EmptyState>
       ) : (
         <div className="mt-8 space-y-10">
-          {sections.map(({ property, documents, tasks }) => (
-            <section key={property.id}>
-              <h2 className="text-[length:var(--text-heading)]">{property.name}</h2>
-              <p className="text-[var(--mute)]">
-                {[property.community, property.address].filter(Boolean).join(" · ") ||
-                  "No address recorded"}
-              </p>
+          {sections.map(({ property, documents, tasks, assets }) => (
+            <section key={property.id} className="rounded-[var(--r-lg)] border border-[var(--line)] p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h2 className="text-[length:var(--text-heading)]">{property.name}</h2>
+                <PropertyProfileSheet property={property} />
+              </div>
+              <PropertyDetails property={property} showPrivate />
 
-              <h3 className="mt-4 text-[length:var(--text-lead)]">Documents</h3>
+              <h3 className="mt-6 text-[length:var(--text-lead)]">Documents</h3>
               <DocumentList
                 documents={documents}
                 propertyId={property.id}
@@ -70,6 +79,12 @@ export default async function AdminClientPage({
                 uploadVariant="outline"
                 uploadLabel="Upload for client"
               />
+
+              <div className="mt-6 flex items-center justify-between gap-3">
+                <h3 className="text-[length:var(--text-lead)]">In the home</h3>
+                <AssetSheet propertyId={property.id} vendors={vendors} variant="outline" label="Add item" />
+              </div>
+              <AssetList assets={assets} vendors={vendors} propertyId={property.id} canManage />
 
               <h3 className="mt-6 text-[length:var(--text-lead)]">Tasks</h3>
               {tasks.length === 0 ? (

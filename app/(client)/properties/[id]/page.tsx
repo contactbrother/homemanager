@@ -3,7 +3,13 @@ import Link from "next/link";
 import { getProperty } from "@/features/properties/queries";
 import { listDocuments } from "@/features/documents/queries";
 import { listTasksForProperty } from "@/features/tasks/queries";
+import { listAssets } from "@/features/assets/queries";
+import { listVendors } from "@/features/vendors/queries";
 import { DocumentList } from "@/features/documents/components/document-list";
+import { AssetList } from "@/features/assets/components/asset-list";
+import { AssetSheet } from "@/features/assets/components/asset-sheet";
+import { PropertyDetails } from "@/features/properties/components/property-details";
+import { PriorityPill } from "@/features/tasks/components/priority-pill";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { TASK_STATUS_LABELS } from "@/lib/constants";
@@ -20,24 +26,36 @@ export default async function PropertyPage({
   const property = await getProperty(id);
   if (!property) notFound();
 
-  const [documents, tasks] = await Promise.all([
+  const [documents, tasks, assets, vendors] = await Promise.all([
     listDocuments(id),
     listTasksForProperty(id),
+    listAssets(id),
+    listVendors(),
   ]);
 
   return (
     <>
       <h1 className="text-[length:var(--text-title)]">{property.name}</h1>
-      <p className="mt-1 text-[var(--mute)]">
-        {[property.community, property.address].filter(Boolean).join(" · ")}
-      </p>
+      <PropertyDetails property={property} showPrivate />
 
-      <h2 className="mt-8 text-[length:var(--text-heading)]">Documents</h2>
-      <DocumentList documents={documents} propertyId={id} />
+      <section className="mt-8">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[length:var(--text-heading)]">Documents</h2>
+        </div>
+        <DocumentList documents={documents} propertyId={id} uploadVariant="outline" />
+      </section>
+
+      <section className="mt-8">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[length:var(--text-heading)]">In the home</h2>
+          <AssetSheet propertyId={id} vendors={vendors} variant="outline" label="Add" />
+        </div>
+        <AssetList assets={assets} vendors={vendors} propertyId={id} canManage />
+      </section>
 
       {tasks.length > 0 ? (
-        <>
-          <h2 className="mt-8 text-[length:var(--text-heading)]">Recent tasks</h2>
+        <section className="mt-8">
+          <h2 className="text-[length:var(--text-heading)]">Recent requests</h2>
           <ul className="mt-4 space-y-3">
             {tasks.slice(0, 3).map((task) => (
               <Card as="li" key={task.id}>
@@ -46,14 +64,16 @@ export default async function PropertyPage({
                   className="flex items-center justify-between gap-3 p-4 min-h-[44px]"
                 >
                   <span>{task.title}</span>
-                  <StatusPill>{TASK_STATUS_LABELS[task.status]}</StatusPill>
+                  <span className="flex shrink-0 gap-1.5">
+                    <PriorityPill priority={task.priority} />
+                    <StatusPill>{TASK_STATUS_LABELS[task.status]}</StatusPill>
+                  </span>
                 </Link>
               </Card>
             ))}
           </ul>
-        </>
+        </section>
       ) : null}
-
     </>
   );
 }

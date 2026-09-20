@@ -57,6 +57,7 @@ export function UploadSheet({
       mime_type: file.type,
       expires_on: expiresOn,
       notes: null,
+      asset_id: null,
       created_at: new Date().toISOString(),
       status: expiryStatus(expiresOn),
     });

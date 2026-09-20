@@ -55,3 +55,46 @@ export async function createProperty(input: {
   revalidatePath(`/admin/clients/${input.ownerId}`);
   return ok({ id: data.id });
 }
+
+/** The home profile: what the team needs at the door. Admin only by policy. */
+export async function updatePropertyProfile(input: {
+  id: string;
+  ownerId: string;
+  name: string;
+  community?: string;
+  address?: string;
+  villaNumber?: string;
+  bedrooms?: string;
+  accessNotes?: string;
+  keyHolders?: string;
+  emergencyContacts?: string;
+}): Promise<ActionResult> {
+  const name = input.name.trim();
+  if (!name) return fail("Give the property a name.");
+  const bedrooms = input.bedrooms ? Number(input.bedrooms) : null;
+  if (bedrooms !== null && (!Number.isInteger(bedrooms) || bedrooms < 0 || bedrooms > 20)) {
+    return fail("Bedrooms must be a whole number.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("properties")
+    .update({
+      name,
+      community: input.community?.trim() || null,
+      address: input.address?.trim() || null,
+      villa_number: input.villaNumber?.trim() || null,
+      bedrooms,
+      access_notes: input.accessNotes?.trim() || null,
+      key_holders: input.keyHolders?.trim() || null,
+      emergency_contacts: input.emergencyContacts?.trim() || null,
+    })
+    .eq("id", input.id);
+
+  if (error) return fail("We could not save those changes. Try again.");
+
+  revalidatePath(`/admin/clients/${input.ownerId}`);
+  revalidatePath(`/properties/${input.id}`);
+  revalidatePath("/properties");
+  return ok();
+}

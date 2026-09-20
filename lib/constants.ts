@@ -31,15 +31,22 @@ export const ALLOWED_FILES_SENTENCE =
   "You can upload a PDF, a photo, or an audio note, up to 20 MB.";
 
 export const DOCUMENT_TYPES = [
-  "amc",
+  "title_deed",
   "ejari",
+  "tenancy_contract",
+  "mortgage",
+  "dewa",
+  "utility",
   "insurance",
+  "amc",
+  "service_contract",
+  "warranty",
   "visa",
   "emirates_id",
   "passport",
+  "school",
   "vehicle",
-  "utility",
-  "warranty",
+  "receipt",
   "other",
 ] as const;
 
@@ -47,16 +54,73 @@ export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 
 /** FR-012. Labels are what a client reads, so they follow the house style. */
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
-  amc: "Maintenance contract",
+  title_deed: "Title deed",
   ejari: "Ejari",
+  tenancy_contract: "Tenancy contract",
+  mortgage: "Mortgage",
+  dewa: "DEWA",
+  utility: "Utility",
   insurance: "Insurance",
+  amc: "Maintenance contract",
+  service_contract: "Service contract",
+  warranty: "Warranty",
   visa: "Visa",
   emirates_id: "Emirates ID",
   passport: "Passport",
+  school: "School",
   vehicle: "Vehicle",
-  utility: "Utility",
-  warranty: "Warranty",
+  receipt: "Receipt",
   other: "Other",
+};
+
+export const ASSET_CATEGORIES = [
+  "ac",
+  "water_heater",
+  "pool",
+  "garden",
+  "appliance",
+  "vehicle",
+  "security",
+  "other",
+] as const;
+export type AssetCategory = (typeof ASSET_CATEGORIES)[number];
+
+export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
+  ac: "Air conditioning",
+  water_heater: "Water heater",
+  pool: "Pool",
+  garden: "Garden and irrigation",
+  appliance: "Appliance",
+  vehicle: "Vehicle",
+  security: "Security and gates",
+  other: "Other",
+};
+
+export const VENDOR_CATEGORIES = [
+  "ac",
+  "plumbing",
+  "electrical",
+  "pool",
+  "garden",
+  "pest",
+  "cleaning",
+  "appliance",
+  "vehicle",
+  "general",
+] as const;
+export type VendorCategory = (typeof VENDOR_CATEGORIES)[number];
+
+export const VENDOR_CATEGORY_LABELS: Record<VendorCategory, string> = {
+  ac: "AC",
+  plumbing: "Plumbing",
+  electrical: "Electrical",
+  pool: "Pool",
+  garden: "Garden",
+  pest: "Pest control",
+  cleaning: "Cleaning",
+  appliance: "Appliances",
+  vehicle: "Vehicles",
+  general: "General maintenance",
 };
 
 export const TASK_STATUSES = [
