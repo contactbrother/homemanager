@@ -7,8 +7,20 @@ const DATE_FORMAT = new Intl.DateTimeFormat("en-GB", {
 
 export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return "";
-  const date = typeof value === "string" ? parseDateOnly(value) : value;
+  const date =
+    typeof value === "string"
+      ? isDateOnly(value)
+        ? parseDateOnly(value)
+        : new Date(value)
+      : value;
+  if (Number.isNaN(date.getTime())) return "";
   return DATE_FORMAT.format(date);
+}
+
+/** `expires_on` arrives as YYYY-MM-DD; `created_at` and friends arrive as full
+ *  timestamps. Only the former needs the timezone-safe parse below. */
+function isDateOnly(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 /** A date column comes back as YYYY-MM-DD. Parsing that with `new Date()` treats it

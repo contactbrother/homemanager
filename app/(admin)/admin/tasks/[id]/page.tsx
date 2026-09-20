@@ -3,6 +3,7 @@ import { getTask, listTaskHistory } from "@/features/tasks/queries";
 import { TaskThread } from "@/features/tasks/components/task-thread";
 import { StatusControl } from "@/features/tasks/components/status-control";
 import { formatDate } from "@/lib/format";
+import { VoiceNote } from "@/features/tasks/components/voice-note";
 
 export default async function AdminTaskPage({
   params,
@@ -29,7 +30,9 @@ export default async function AdminTaskPage({
 
       {task.body ? <p className="mt-4">{task.body}</p> : null}
       {task.voice_path ? (
-        <p className="mt-4 text-[var(--mute)]">Voice note attached.</p>
+        <div className="mt-4">
+          <VoiceNote path={task.voice_path} label="Client's voice note" />
+        </div>
       ) : null}
 
       <div className="mt-6">

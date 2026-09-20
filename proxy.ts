@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { ACTOR_CACHE_COOKIE as CACHE_COOKIE } from "@/lib/constants";
 
 /**
 /* Next 16 renamed the middleware convention to proxy; the file does the same job.
@@ -15,8 +16,6 @@ import { createServerClient } from "@supabase/ssr";
  * `is_active()` in the row level security policies is the real guarantee. Even with a
  * stale cookie, a deactivated client's queries return nothing. See analyze finding R1.
  */
-const CACHE_COOKIE = "dar-actor";
-
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -57,7 +56,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Role and deactivation, from the cookie when we already know them.
-  let actor = readActor(request);
+  let actor = readActor(request, user.id);
   if (!actor) {
     const { data } = await supabase
       .from("profiles")
@@ -69,7 +68,7 @@ export async function proxy(request: NextRequest) {
       role: data?.role === "admin" ? "admin" : "client",
       active: !data?.deactivated_at,
     };
-    response.cookies.set(CACHE_COOKIE, `${actor.role}:${actor.active ? 1 : 0}`, {
+    response.cookies.set(CACHE_COOKIE, `${user.id}:${actor.role}:${actor.active ? 1 : 0}`, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -102,12 +101,16 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
+/** The cache is bound to the user id it was written for, so a different account
+ *  signing in on the same browser never inherits the previous person's role. */
 function readActor(
   request: NextRequest,
+  userId: string,
 ): { role: "admin" | "client"; active: boolean } | null {
   const raw = request.cookies.get(CACHE_COOKIE)?.value;
   if (!raw) return null;
-  const [role, active] = raw.split(":");
+  const [owner, role, active] = raw.split(":");
+  if (owner !== userId) return null;
   if (role !== "admin" && role !== "client") return null;
   return { role, active: active === "1" };
 }

@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/supabase/types";
-import { MAX_FILE_BYTES, STORAGE_BUCKET, type TaskStatus } from "@/lib/constants";
+import {
+  MAX_FILE_BYTES,
+  SIGNED_URL_TTL,
+  STORAGE_BUCKET,
+  type TaskStatus,
+} from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { safeName } from "@/lib/storage";
 
@@ -39,40 +44,60 @@ export async function createTask(input: {
     ? body.split("\n")[0].slice(0, 80)
     : `Voice note, ${formatDate(new Date())}`;
 
-  const { data: row, error } = await supabase
-    .from("tasks")
-    .insert({
-      property_id: input.propertyId,
-      created_by: user.id,
-      title,
-      body,
-      status: "received",
-    })
-    .select("id")
-    .single();
-
-  if (error || !row) return fail("That did not send. Try again.");
+  // The id is chosen here so the recording can be stored under it before the row
+  // exists. Clients may insert tasks but not update them (policy), so the path has to
+  // travel with the insert rather than follow it.
+  const id = crypto.randomUUID();
+  let voicePath: string | null = null;
 
   if (voice) {
-    const path = `${input.propertyId}/${row.id}/${safeName(voiceName(voice))}`;
+    const path = `${input.propertyId}/${id}/${safeName(voiceName(voice))}`;
     const { error: uploadError } = await supabase.storage
       .from(STORAGE_BUCKET)
       .upload(path, voice, { contentType: voice.type });
 
     if (uploadError) {
-      if (!body) {
-        // A voice-only task with no recording behind it would be an empty task.
-        await supabase.from("tasks").delete().eq("id", row.id);
-        return fail("That recording did not send. Try again.");
-      }
+      console.error("[task] voice upload failed", uploadError.message);
+      // A voice-only task with no recording behind it would be an empty task.
+      if (!body) return fail("That recording did not send. Try again.");
     } else {
-      await supabase.from("tasks").update({ voice_path: path }).eq("id", row.id);
+      voicePath = path;
     }
+  }
+
+  const { error } = await supabase.from("tasks").insert({
+    id,
+    property_id: input.propertyId,
+    created_by: user.id,
+    title,
+    body,
+    status: "received",
+    voice_path: voicePath,
+  });
+
+  if (error) {
+    console.error("[task] insert failed", error.message);
+    if (voicePath) await supabase.storage.from(STORAGE_BUCKET).remove([voicePath]);
+    return fail("That did not send. Try again.");
   }
 
   revalidatePath("/tasks");
   revalidatePath("/");
-  return ok({ id: row.id });
+  return ok({ id });
+}
+
+/**
+ * A short-lived signed URL for a recording. The storage policies decide who may read
+ * the file, so this returns nothing useful to anyone the task is not theirs to see.
+ */
+export async function getVoiceUrl(path: string): Promise<ActionResult<{ url: string }>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .createSignedUrl(path, SIGNED_URL_TTL);
+
+  if (error || !data) return fail("We could not load that recording. Try again.");
+  return ok({ url: data.signedUrl });
 }
 
 /** FR-028. Client or team. */

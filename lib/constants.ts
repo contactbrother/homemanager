@@ -5,6 +5,9 @@ export const EXPIRY_WARNING_DAYS = 30;
 /** How long a signed file URL stays valid, in seconds. FR-018. */
 export const SIGNED_URL_TTL = 60;
 
+/** Cookie the middleware uses to cache the signed-in person's role and status. */
+export const ACTOR_CACHE_COOKIE = "dar-actor";
+
 /** Minimum password length for sign-up. Matches the Supabase project default. */
 export const MIN_PASSWORD_LENGTH = 6;
 

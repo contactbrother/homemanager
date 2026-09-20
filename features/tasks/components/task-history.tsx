@@ -2,6 +2,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { TASK_STATUS_LABELS, TASK_STATUS_LABELS_TEAM } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import type { TaskMessageWithAuthor } from "@/features/tasks/types";
+import { VoiceNote } from "@/features/tasks/components/voice-note";
 
 /**
  * FR-028, FR-050. Notes and status changes in one chronological list, so a reopened
@@ -35,9 +36,7 @@ export function TaskHistory({
               </p>
             ) : null}
             {entry.body ? <p className="mt-1">{entry.body}</p> : null}
-            {entry.voice_path ? (
-              <p className="mt-1 text-[var(--mute)]">Voice note</p>
-            ) : null}
+            {entry.voice_path ? <VoiceNote path={entry.voice_path} /> : null}
           </li>
         );
       })}

@@ -1,10 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/supabase/types";
-import { MIN_PASSWORD_LENGTH } from "@/lib/constants";
+import { ACTOR_CACHE_COOKIE, MIN_PASSWORD_LENGTH } from "@/lib/constants";
 
 /**
  * FR-001 (revised). Email and password sign-in.
@@ -34,6 +35,7 @@ export async function signInWithPassword(input: {
     return fail("Email or password is incorrect.");
   }
 
+  await clearActorCache();
   // Middleware routes to /admin or / by role on the next request.
   redirect("/");
 }
@@ -86,13 +88,22 @@ export async function signUpWithPassword(input: {
 
   if (!data.session) return ok({ needsConfirmation: true });
 
+  await clearActorCache();
   redirect("/");
 }
 
 export async function signOut(): Promise<never> {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  await clearActorCache();
   redirect("/sign-in");
+}
+
+/** The middleware caches the signed-in person's role in a cookie. Any change of
+ *  account must drop it, or the next person routes as the previous one. */
+async function clearActorCache() {
+  const store = await cookies();
+  store.delete(ACTOR_CACHE_COOKIE);
 }
 
 /** FR-006. The signed-in person's own row only; the policy enforces that. */
