@@ -14,12 +14,14 @@ import type { DocumentWithStatus } from "@/features/documents/types";
 export function DocumentList({
   documents,
   propertyId,
+  assets = [],
   canDelete = false,
   uploadVariant = "primary",
   uploadLabel,
 }: {
   documents: DocumentWithStatus[];
   propertyId: string;
+  assets?: Array<{ id: string; name: string }>;
   canDelete?: boolean;
   uploadVariant?: "primary" | "outline";
   uploadLabel?: string;
@@ -49,6 +51,7 @@ export function DocumentList({
       <div className="mt-4">
         <UploadSheet
           propertyId={propertyId}
+          assets={assets}
           variant={uploadVariant}
           label={uploadLabel}
           onOptimistic={setPendingUpload}

@@ -75,6 +75,7 @@ export default async function AdminClientPage({
               <DocumentList
                 documents={documents}
                 propertyId={property.id}
+                assets={assets}
                 canDelete
                 uploadVariant="outline"
                 uploadLabel="Upload for client"

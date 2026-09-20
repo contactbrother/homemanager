@@ -15,11 +15,14 @@ import {
 /** FR-011, FR-013. An expiry is optional: a floor plan has none and must still upload. */
 export function UploadSheet({
   propertyId,
+  assets = [],
   label = "Upload a document",
   variant = "primary",
   onOptimistic,
 }: {
   propertyId: string;
+  /** Items in the home a document can belong to (a warranty, a service report). */
+  assets?: Array<{ id: string; name: string }>;
   label?: string;
   /** Secondary on the admin client page, where create-property is the primary
    *  action and two gold buttons would break Principle I. */
@@ -43,6 +46,7 @@ export function UploadSheet({
     const title = String(form.get("title") ?? "");
     const docType = String(form.get("docType") ?? "other") as DocumentType;
     const expiresOn = String(form.get("expiresOn") ?? "") || null;
+    const assetId = String(form.get("assetId") ?? "") || null;
 
     setError(null);
     setOpen(false);
@@ -57,7 +61,7 @@ export function UploadSheet({
       mime_type: file.type,
       expires_on: expiresOn,
       notes: null,
-      asset_id: null,
+      asset_id: assetId,
       created_at: new Date().toISOString(),
       status: expiryStatus(expiresOn),
     });
@@ -68,6 +72,7 @@ export function UploadSheet({
         title,
         docType,
         expiresOn,
+        assetId,
         file,
       });
       // Either way the optimistic row goes: on success the server row replaces it,
@@ -131,6 +136,27 @@ export function UploadSheet({
               Leave blank if it does not expire, like a floor plan.
             </p>
           </div>
+
+          {assets.length > 0 ? (
+            <div>
+              <label htmlFor="assetId" className="block mb-2">
+                Belongs to <span className="text-[var(--mute)]">Optional</span>
+              </label>
+              <select
+                id="assetId"
+                name="assetId"
+                defaultValue=""
+                className="w-full min-h-[44px] px-4 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]"
+              >
+                <option value="">The home in general</option>
+                {assets.map((asset) => (
+                  <option key={asset.id} value={asset.id}>
+                    {asset.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
           <div>
             <label htmlFor="file" className="block mb-2">

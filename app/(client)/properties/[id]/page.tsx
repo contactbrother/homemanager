@@ -42,7 +42,7 @@ export default async function PropertyPage({
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-[length:var(--text-heading)]">Documents</h2>
         </div>
-        <DocumentList documents={documents} propertyId={id} uploadVariant="outline" />
+        <DocumentList documents={documents} propertyId={id} assets={assets} uploadVariant="outline" />
       </section>
 
       <section className="mt-8">

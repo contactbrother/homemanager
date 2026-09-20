@@ -16,12 +16,20 @@ import { requiredEnv } from "@/lib/env";
  * See research.md R6.
  */
 function adminAuth() {
-  const client = createClient(
+  return createAdminClient().auth.admin;
+}
+
+/**
+ * The one exception to "auth only": the daily reminder job (app/api/cron/reminders)
+ * runs with no signed-in user, so it reads renewals and writes the reminder log with
+ * the service role. Nothing else may import this.
+ */
+export function createAdminClient() {
+  return createClient(
     requiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
     requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     { auth: { autoRefreshToken: false, persistSession: false } },
   );
-  return client.auth.admin;
 }
 
 /** Registers a client's email address and sends their first sign-in link.

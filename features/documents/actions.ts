@@ -19,6 +19,7 @@ export async function uploadDocument(input: {
   title: string;
   docType: DocumentType;
   expiresOn?: string | null;
+  assetId?: string | null;
   file: File;
 }): Promise<ActionResult<{ id: string }>> {
   const title = input.title.trim();
@@ -49,6 +50,7 @@ export async function uploadDocument(input: {
       file_size: input.file.size,
       mime_type: input.file.type,
       expires_on: input.expiresOn || null,
+      asset_id: input.assetId || null,
     })
     .select("id")
     .single();
