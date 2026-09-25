@@ -166,3 +166,21 @@ export async function changePassword(input: {
   }
   return ok();
 }
+
+/** Account setting: renewal reminder emails on or off. */
+export async function setEmailReminders(on: boolean): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return fail("You are not signed in.");
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ email_reminders: on })
+    .eq("id", user.id);
+  if (error) return fail("That did not save. Try again.");
+
+  revalidatePath("/profile");
+  return ok();
+}

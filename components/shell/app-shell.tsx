@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { DarMark, DarWordmark } from "@/components/brand/dar-mark";
 import { SidebarNav, TabBar } from "./shell-nav";
+import { PhoneTopBar, ShellMain } from "./shell-frame";
 import type { NavItem } from "./nav-items";
 
 /**
@@ -59,18 +60,18 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="md:hidden sticky top-0 z-30 flex h-[var(--topbar-h)] items-center justify-between border-b border-[var(--line)] bg-[var(--bg)]/95 px-5 backdrop-blur pt-[env(safe-area-inset-top)] box-content">
+        <PhoneTopBar>
           <Link href={homeHref} aria-label="Dar home">
             <DarWordmark team={team} />
           </Link>
           {topBarEnd}
-        </header>
+        </PhoneTopBar>
 
-        <main className="flex-1 px-5 pt-6 pb-[calc(var(--tabbar-h)+96px+env(safe-area-inset-bottom))] md:px-8 md:py-10 lg:px-12">
+        <ShellMain>
           <div className={`mx-auto w-full ${width === "full" ? "max-w-6xl" : width === "wide" ? "max-w-5xl" : "max-w-3xl"}`}>
             {children}
           </div>
-        </main>
+        </ShellMain>
       </div>
 
       {phoneAction}

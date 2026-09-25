@@ -62,7 +62,7 @@ export function PanelRow({
         <Link
           href={href}
           aria-current={current ? "page" : undefined}
-          className={`${pad} min-h-[44px] transition-colors duration-[var(--fast)] ${current ? "" : "hover:bg-[var(--surface-2)]"}`}
+          className={`${pad} min-h-[44px] transition-colors duration-[var(--fast)] ${current ? "" : "hover:bg-[var(--surface-2)] active:bg-[var(--line)]"}`}
         >
           {children}
         </Link>

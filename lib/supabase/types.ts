@@ -18,6 +18,8 @@ export interface Profile {
   role: UserRole;
   created_at: string;
   deactivated_at: string | null;
+  /** Renewal reminder emails. Default on. */
+  email_reminders: boolean;
 }
 
 export interface Property {

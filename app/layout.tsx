@@ -25,6 +25,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Android shrinks the page for the keyboard, so docked message boxes stay visible.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

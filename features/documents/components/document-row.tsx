@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+
 import { useState, useTransition } from "react";
 import { deleteDocument, getDocumentUrl } from "@/features/documents/actions";
 import { Card } from "@/components/ui/card";
@@ -54,36 +57,41 @@ export function DocumentRowItem({
   }
 
   if (variant === "row") {
-    return (
-      <li>
-        <button
-          type="button"
-          onClick={open}
-          disabled={busy || pending}
-          className="grid w-full min-h-[44px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 px-4 py-3.5 text-left transition-colors duration-[var(--fast)] hover:bg-[var(--surface-2)] disabled:hover:bg-transparent md:grid-cols-[minmax(0,1fr)_200px_150px] md:px-5"
-        >
-          <span className="min-w-0">
-            <span className="block truncate font-medium">{doc.title}</span>
-            <span className="block text-[length:var(--text-small)] text-[var(--mute)]">
-              {pending ? "Uploading" : DOCUMENT_TYPE_LABELS[doc.doc_type]}
-              <span className="md:hidden">
-                {doc.expires_on && !pending ? `, expires ${formatDate(doc.expires_on)}` : ""}
-              </span>
+    // Opens the in-app viewer, so Back returns here rather than to a stray browser tab.
+    const cells = (
+      <>
+        <span className="min-w-0">
+          <span className="block truncate font-medium">{doc.title}</span>
+          <span className="block text-[length:var(--text-small)] text-[var(--mute)]">
+            {pending ? "Uploading" : DOCUMENT_TYPE_LABELS[doc.doc_type]}
+            <span className="md:hidden">
+              {doc.expires_on && !pending ? `, expires ${formatDate(doc.expires_on)}` : ""}
             </span>
           </span>
-          <span className="hidden text-[length:var(--text-small)] text-[var(--ink-soft)] md:block">
-            {doc.expires_on && !pending ? `Expires ${formatDate(doc.expires_on)}` : "No expiry"}
-          </span>
-          <span className="flex justify-end">
-            {label ? <StatusPill tone={expiryTone(doc.status)}>{label}</StatusPill> : null}
-            {busy ? <span className="text-[length:var(--text-small)] text-[var(--mute)]">Opening</span> : null}
-          </span>
-        </button>
-        {error ? (
-          <p role="alert" className="px-4 pb-3 text-[var(--alert)] md:px-5">
-            {error}
-          </p>
-        ) : null}
+        </span>
+        <span className="hidden text-[length:var(--text-small)] text-[var(--ink-soft)] md:block">
+          {doc.expires_on && !pending ? `Expires ${formatDate(doc.expires_on)}` : "No expiry"}
+        </span>
+        <span className="flex items-center justify-end gap-1">
+          {label ? <StatusPill tone={expiryTone(doc.status)}>{label}</StatusPill> : null}
+          {!pending ? <ChevronRight aria-hidden size={18} className="text-[var(--mute)]" /> : null}
+        </span>
+      </>
+    );
+    const grid =
+      "grid w-full min-h-[44px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 px-4 py-3.5 text-left md:grid-cols-[minmax(0,1fr)_200px_170px] md:px-5";
+    return (
+      <li>
+        {pending ? (
+          <div className={`${grid} opacity-60`}>{cells}</div>
+        ) : (
+          <Link
+            href={`/properties/${doc.property_id}/documents/${doc.id}`}
+            className={`${grid} transition-colors duration-[var(--fast)] hover:bg-[var(--surface-2)] active:bg-[var(--line)]`}
+          >
+            {cells}
+          </Link>
+        )}
       </li>
     );
   }

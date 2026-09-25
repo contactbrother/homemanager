@@ -66,7 +66,21 @@ export async function GET(request: Request) {
     let channel: "email" | "skipped" = "skipped";
     let error: string | undefined;
 
-    if (configured && email) {
+    // Clients can turn reminder emails off in Account. The team copy still goes out.
+    const { data: prefs } = await admin
+      .from("profiles")
+      .select("email_reminders")
+      .eq("id", ownerId)
+      .maybeSingle();
+    const optedOut = prefs?.email_reminders === false;
+
+    if (configured && optedOut && teamAddress) {
+      await sendEmail({
+        to: teamAddress,
+        subject: `[Dar team] ${subjectFor(ownerItems)} (${ownerItems[0].propertyName}, client emails off)`,
+        text: bodyFor(ownerItems),
+      });
+    } else if (configured && email) {
       const result = await sendEmail({
         to: email,
         subject: subjectFor(ownerItems),

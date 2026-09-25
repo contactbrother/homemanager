@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { isImmersive } from "@/components/shell/immersive";
 import { createTask } from "@/features/tasks/actions";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
@@ -33,8 +34,8 @@ export function NewTaskSheet({
   const pathname = usePathname();
 
   if (properties.length === 0) return null;
-  // A request page has its own reply bar at the bottom; the floating button would cover it.
-  if (trigger === "fab" && /^\/tasks\/.+/.test(pathname)) return null;
+  // Full-screen phone views have their own controls at the bottom.
+  if (trigger === "fab" && isImmersive(pathname)) return null;
 
   function send() {
     setError(null);

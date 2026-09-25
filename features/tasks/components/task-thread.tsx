@@ -3,6 +3,7 @@
 import { useOptimistic, useState } from "react";
 import { TaskHistory } from "./task-history";
 import { AddNote } from "./add-note";
+import { NoteComposer } from "./note-composer";
 import type { TaskMessageWithAuthor } from "@/features/tasks/types";
 
 /**
@@ -26,6 +27,37 @@ export function TaskThread({
 }) {
   const [pending, setPending] = useState<TaskMessageWithAuthor | null>(null);
   const [optimistic] = useOptimistic(pending ? [...entries, pending] : entries);
+
+  const stage = (body: string | null) =>
+    setPending(
+      body
+        ? {
+            id: `pending-${Date.now()}`,
+            task_id: taskId,
+            author_id: "",
+            body,
+            voice_path: null,
+            status_to: null,
+            created_at: new Date().toISOString(),
+            profiles: {
+              id: "",
+              full_name: authorName,
+              role: audience === "team" ? "admin" : "client",
+            },
+          }
+        : null,
+    );
+
+  // The client request screen: chat-style history with a docked message box.
+  if (variant === "timeline") {
+    return (
+      <>
+        <TaskHistory entries={optimistic} audience={audience} variant="timeline" />
+        <div id="thread-end" />
+        <NoteComposer taskId={taskId} onOptimistic={stage} />
+      </>
+    );
+  }
 
   return (
     <>

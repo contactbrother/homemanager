@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { isActive, type IconName, type NavItem } from "./nav-items";
+import { isImmersive } from "./immersive";
 
 const ICONS: Record<IconName, LucideIcon> = {
   home: House,
@@ -64,6 +65,7 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
 
 export function TabBar({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+  if (isImmersive(pathname)) return null;
 
   return (
     <nav
@@ -80,7 +82,7 @@ export function TabBar({ items }: { items: NavItem[] }) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={[
-                  "flex h-[var(--tabbar-h)] flex-col items-center justify-center gap-1 text-[length:var(--text-tiny)]",
+                  "flex h-[var(--tabbar-h)] flex-col items-center justify-center gap-1 text-[length:var(--text-tiny)] active:opacity-70",
                   active ? "text-[var(--accent-text)] font-semibold" : "text-[var(--mute)] font-medium",
                 ].join(" ")}
               >

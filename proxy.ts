@@ -46,6 +46,10 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  // Legal pages are readable by anyone, signed in or not, client or team.
+  if (path === "/privacy" || path === "/terms") return response;
+
   const isPublic =
     path.startsWith("/sign-in") ||
     path.startsWith("/sign-up") ||
@@ -117,5 +121,5 @@ function readActor(
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|webp)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|webp|mjs)$).*)"],
 };

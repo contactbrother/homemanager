@@ -1,12 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import { getTask, listTaskHistory } from "@/features/tasks/queries";
 import { TaskThread } from "@/features/tasks/components/task-thread";
 import { PriorityPill } from "@/features/tasks/components/priority-pill";
 import { requireClient } from "@/features/auth/guards";
 import { statusTone } from "@/features/tasks/status-tone";
-import { Panel } from "@/components/ui/panel";
+import { ScreenBar } from "@/components/shell/screen-bar";
+import { PhoneCollapsible } from "@/components/ui/collapsible";
 import { StatusPill } from "@/components/ui/status-pill";
 import { TASK_PRIORITY_LABELS, TASK_STATUS_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
@@ -17,6 +16,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: task?.title ?? "Request" };
 }
 
+/**
+ * On a phone a request is a full-screen conversation: its own top bar, the details
+ * folded into one line, the history, and a message box docked above the keyboard.
+ * From tablet up it keeps the panel layout beside the request list.
+ */
 export default async function TaskPage({
   params,
 }: {
@@ -28,6 +32,7 @@ export default async function TaskPage({
   if (!task) notFound();
 
   const history = await listTaskHistory(id);
+  const status = TASK_STATUS_LABELS[task.status];
   const facts: Array<[string, string]> = [
     ["Home", task.properties?.name ?? ""],
     ["Sent", formatDate(task.created_at)],
@@ -36,56 +41,56 @@ export default async function TaskPage({
   ];
 
   return (
-    <div className="settle" key={id}>
-      <Link
-        href="/tasks"
-        className="-ml-1 mb-2 inline-flex min-h-[44px] items-center gap-1 text-[var(--ink-soft)] hover:text-[var(--ink)] lg:hidden"
-      >
-        <ChevronLeft aria-hidden size={18} />
-        All requests
-      </Link>
+    <div key={id}>
+      <ScreenBar backHref="/tasks" backLabel="All requests" title={task.title} subtitle={status} />
 
-      <header className="mb-5 lg:mt-[4px]">
+      <header className="mb-5 hidden md:block">
         <h1 className="text-[length:var(--text-title)]">{task.title}</h1>
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          <StatusPill tone={statusTone(task.status)}>{TASK_STATUS_LABELS[task.status]}</StatusPill>
+          <StatusPill tone={statusTone(task.status)}>{status}</StatusPill>
           <PriorityPill priority={task.priority} />
         </div>
       </header>
 
-      <div className="grid gap-4 md:gap-5">
-        <Panel title="Details">
-          <div className="px-4 py-4 md:px-5">
-            {task.body ? (
-              <p className="whitespace-pre-line">{task.body}</p>
-            ) : (
-              <p className="text-[var(--mute)]">No extra details were added.</p>
-            )}
-            <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-[var(--line)] pt-4 sm:grid-cols-4">
-              {facts
-                .filter(([, value]) => value)
-                .map(([label, value]) => (
-                  <div key={label}>
-                    <dt className="text-[length:var(--text-small)] text-[var(--mute)]">{label}</dt>
-                    <dd className="font-medium">{value}</dd>
-                  </div>
-                ))}
-            </dl>
-          </div>
-        </Panel>
+      <section className="border-b border-[var(--line)] bg-[var(--surface)] px-4 md:mb-5 md:rounded-[var(--r-lg)] md:border md:px-5 md:py-4">
+        <h2 className="hidden text-[length:var(--text-heading)] md:block md:mb-3">Details</h2>
+        <PhoneCollapsible
+          summary={
+            <span className="flex flex-wrap items-center gap-1.5">
+              <StatusPill tone={statusTone(task.status)}>{status}</StatusPill>
+              <PriorityPill priority={task.priority} />
+              <span className="text-[length:var(--text-small)] text-[var(--mute)]">Details</span>
+            </span>
+          }
+        >
+          {task.body ? (
+            <p className="whitespace-pre-line">{task.body}</p>
+          ) : (
+            <p className="text-[var(--mute)]">No extra details were added.</p>
+          )}
+          <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-[var(--line)] pt-4 pb-3 sm:grid-cols-4 md:pb-0">
+            {facts
+              .filter(([, value]) => value)
+              .map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-[length:var(--text-small)] text-[var(--mute)]">{label}</dt>
+                  <dd className="font-medium">{value}</dd>
+                </div>
+              ))}
+          </dl>
+        </PhoneCollapsible>
+      </section>
 
-        <Panel title="History">
-          <div className="px-4 py-5 md:px-5">
-            <TaskThread
-              taskId={id}
-              entries={history}
-              audience="client"
-              authorName={profile.full_name ?? "You"}
-              variant="timeline"
-            />
-          </div>
-        </Panel>
-      </div>
+      <section className="px-4 pt-5 md:rounded-[var(--r-lg)] md:border md:border-[var(--line)] md:bg-[var(--surface)] md:px-5 md:pb-5">
+        <h2 className="mb-4 text-[length:var(--text-heading)]">History</h2>
+        <TaskThread
+          taskId={id}
+          entries={history}
+          audience="client"
+          authorName={profile.full_name ?? "You"}
+          variant="timeline"
+        />
+      </section>
     </div>
   );
 }
