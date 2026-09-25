@@ -11,10 +11,13 @@ export function HandleRenewalButton({
   item,
   href = "/tasks",
   label = "Ask Dar to handle",
+  compact = false,
 }: {
   item: RenewalItem;
   href?: string;
   label?: string;
+  /** Flush with the row text, for rows inside a panel. */
+  compact?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -25,6 +28,7 @@ export function HandleRenewalButton({
       <Button
         variant="text"
         disabled={pending}
+        className={compact ? "px-0! min-h-[40px]!" : ""}
         onClick={() =>
           start(async () => {
             setError(null);

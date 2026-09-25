@@ -130,3 +130,39 @@ export async function updateProfile(input: {
   revalidatePath("/profile");
   return ok();
 }
+
+/**
+ * Change password. The current password is checked first by signing in with it, so a
+ * device left signed in cannot be used to lock the owner out of their own account.
+ */
+export async function changePassword(input: {
+  current: string;
+  next: string;
+}): Promise<ActionResult> {
+  if (!input.current) return fail("Enter your current password.");
+  if (input.next.length < MIN_PASSWORD_LENGTH) {
+    return fail(`Use a new password of at least ${MIN_PASSWORD_LENGTH} characters.`);
+  }
+  if (input.next === input.current) {
+    return fail("The new password is the same as the current one.");
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) return fail("You are not signed in.");
+
+  const { error: checkError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: input.current,
+  });
+  if (checkError) return fail("Your current password is not right.");
+
+  const { error } = await supabase.auth.updateUser({ password: input.next });
+  if (error) {
+    console.info("[password] refused", { reason: error.message });
+    return fail("The password did not change. Try again.");
+  }
+  return ok();
+}

@@ -15,19 +15,21 @@ export function TaskThread({
   audience,
   authorName,
   label,
+  variant,
 }: {
   taskId: string;
   entries: TaskMessageWithAuthor[];
   audience: "client" | "team";
   authorName: string;
   label?: string;
+  variant?: "list" | "timeline";
 }) {
   const [pending, setPending] = useState<TaskMessageWithAuthor | null>(null);
   const [optimistic] = useOptimistic(pending ? [...entries, pending] : entries);
 
   return (
     <>
-      <TaskHistory entries={optimistic} audience={audience} />
+      <TaskHistory entries={optimistic} audience={audience} variant={variant} />
       <div className="fixed inset-x-0 bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom))] z-30 border-t border-[var(--line)] bg-[var(--surface)] md:static md:z-auto md:mt-6 md:border-0 md:bg-transparent">
         <div className="px-5 py-3 md:px-0 md:py-0">
           <AddNote

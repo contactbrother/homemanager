@@ -32,7 +32,7 @@ export function AppShell({
   phoneAction?: React.ReactNode;
   sidebarFooter?: React.ReactNode;
   topBarEnd?: React.ReactNode;
-  width?: "narrow" | "wide";
+  width?: "narrow" | "wide" | "full";
   children: React.ReactNode;
 }) {
   return (
@@ -67,7 +67,7 @@ export function AppShell({
         </header>
 
         <main className="flex-1 px-5 pt-6 pb-[calc(var(--tabbar-h)+96px+env(safe-area-inset-bottom))] md:px-8 md:py-10 lg:px-12">
-          <div className={`mx-auto w-full ${width === "wide" ? "max-w-5xl" : "max-w-3xl"}`}>
+          <div className={`mx-auto w-full ${width === "full" ? "max-w-6xl" : width === "wide" ? "max-w-5xl" : "max-w-3xl"}`}>
             {children}
           </div>
         </main>

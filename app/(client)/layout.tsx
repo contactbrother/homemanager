@@ -19,6 +19,7 @@ export default async function ClientLayout({
       action={<NewTaskSheet properties={properties} trigger="sidebar" />}
       phoneAction={<NewTaskSheet properties={properties} trigger="fab" />}
       sidebarFooter={<SidebarHelp />}
+      width="full"
     >
       {children}
     </AppShell>

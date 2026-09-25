@@ -1,20 +1,20 @@
-import Link from "next/link";
 import { requireClient } from "@/features/auth/guards";
 import { listRenewals } from "@/features/renewals/queries";
 import { listTasks } from "@/features/tasks/queries";
 import { listProperties } from "@/features/properties/queries";
-import { RenewalList } from "@/features/renewals/components/renewal-list";
-import { PriorityPill } from "@/features/tasks/components/priority-pill";
-import { Card } from "@/components/ui/card";
-import { StatusPill } from "@/components/ui/status-pill";
-import { EXPIRY_WARNING_DAYS, OPEN_TASK_STATUSES, TASK_STATUS_LABELS } from "@/lib/constants";
+import { RenewalRows } from "@/features/renewals/components/renewal-rows";
+import { RequestRow } from "@/features/tasks/components/request-row";
+import { Panel, PanelEmpty, PanelList } from "@/components/ui/panel";
+import { PageHeader } from "@/components/ui/page-header";
+import { EXPIRY_WARNING_DAYS, OPEN_TASK_STATUSES } from "@/lib/constants";
 
-export const metadata = { title: "Dar" };
+export const metadata = { title: "Home" };
 
 /**
- * FR-031 to FR-034, revised. The home screen answers three questions in order:
- * is anything waiting on me, what is coming up in the next 30 days, and what is Dar
- * handling right now. A home with nothing due says so in a sentence.
+ * FR-031 to FR-034. The home screen answers three questions: is anything waiting on
+ * me, what is coming up, and what is Dar handling. Three panels side by side on a
+ * desktop, two columns on a tablet, stacked on a phone. A panel with nothing in it
+ * says so, so the layout never shifts and nothing looks missing.
  */
 export default async function HomePage() {
   const profile = await requireClient();
@@ -28,75 +28,67 @@ export default async function HomePage() {
   const handling = tasks.filter(
     (t) => OPEN_TASK_STATUSES.includes(t.status) && t.status !== "waiting_on_client",
   );
+  const many = properties.length > 1;
   const firstName = profile.full_name?.split(" ")[0];
-  const quiet = waiting.length === 0 && renewals.length === 0;
 
   return (
     <>
-      <h1 className="text-[length:var(--text-title)]">
-        {firstName ? `Hello, ${firstName}` : "Hello"}
-      </h1>
+      <PageHeader
+        title={firstName ? `Hello, ${firstName}` : "Hello"}
+        subtitle={summary(waiting.length, renewals.length)}
+      />
 
-      {quiet ? (
-        <p className="mt-2 text-[var(--ink-soft)]">
-          Nothing needs your attention in the next {EXPIRY_WARNING_DAYS} days.
-        </p>
-      ) : (
-        <p className="mt-2 text-[var(--ink-soft)]">
-          {summary(waiting.length, renewals.length)}
-        </p>
-      )}
+      <div className="grid gap-4 md:grid-cols-2 md:gap-5 lg:grid-cols-3 lg:items-start">
+        <div className="grid gap-4 md:gap-5 lg:contents">
+          <Panel title="Waiting on you" count={waiting.length} className="settle">
+            {waiting.length > 0 ? (
+              <PanelList>
+                {waiting.map((task) => (
+                  <RequestRow key={task.id} task={task} showProperty={many} />
+                ))}
+              </PanelList>
+            ) : (
+              <PanelEmpty>Nothing needs a reply from you.</PanelEmpty>
+            )}
+          </Panel>
 
-      {waiting.length > 0 ? (
-        <section className="mt-6">
-          <h2 className="text-[length:var(--text-heading)]">Waiting on you</h2>
-          <TaskCards tasks={waiting} />
-        </section>
-      ) : null}
+          <Panel title={`Next ${EXPIRY_WARNING_DAYS} days`} count={renewals.length} className="settle">
+            {renewals.length > 0 ? (
+              <RenewalRows items={renewals} showProperty={many} />
+            ) : (
+              <PanelEmpty>No renewals or services due in the next {EXPIRY_WARNING_DAYS} days.</PanelEmpty>
+            )}
+          </Panel>
+        </div>
 
-      {renewals.length > 0 ? (
-        <section className="mt-8">
-          <h2 className="text-[length:var(--text-heading)]">Next {EXPIRY_WARNING_DAYS} days</h2>
-          <RenewalList items={renewals} showProperty={properties.length > 1} linkBase="client" />
-        </section>
-      ) : null}
-
-      {handling.length > 0 ? (
-        <section className="mt-8">
-          <h2 className="text-[length:var(--text-heading)]">Dar is handling</h2>
-          <TaskCards tasks={handling} />
-        </section>
-      ) : null}
+        <Panel title="Dar is handling" count={handling.length} className="settle">
+          {handling.length > 0 ? (
+            <PanelList>
+              {handling.map((task) => (
+                <RequestRow key={task.id} task={task} showProperty={many} />
+              ))}
+            </PanelList>
+          ) : (
+            <PanelEmpty>Nothing in progress. Anything you send us appears here while we work on it.</PanelEmpty>
+          )}
+        </Panel>
+      </div>
     </>
   );
 }
 
 function summary(waiting: number, renewals: number): string {
+  if (waiting === 0 && renewals === 0) {
+    return `Nothing needs your attention in the next ${EXPIRY_WARNING_DAYS} days.`;
+  }
   const parts: string[] = [];
-  if (waiting > 0) parts.push(waiting === 1 ? "one request needs a reply" : `${waiting} requests need a reply`);
-  if (renewals > 0) parts.push(renewals === 1 ? "one renewal coming up" : `${renewals} renewals coming up`);
+  if (waiting > 0) parts.push(waiting === 1 ? "one request needs a reply" : `${say(waiting)} requests need a reply`);
+  if (renewals > 0) parts.push(renewals === 1 ? "one renewal coming up" : `${say(renewals)} renewals coming up`);
   const sentence = parts.join(" and ");
   return sentence.charAt(0).toUpperCase() + sentence.slice(1) + ".";
 }
 
-function TaskCards({ tasks }: { tasks: Array<{ id: string; title: string; status: keyof typeof TASK_STATUS_LABELS; priority: "low" | "normal" | "high" | "emergency" }> }) {
-  return (
-    <ul className="mt-4 space-y-3 settle">
-      {tasks.map((task) => (
-        <Card as="li" key={task.id}>
-          <Link href={`/tasks/${task.id}`} className="block p-4 min-h-[44px]">
-            <div className="flex items-start justify-between gap-3">
-              <span className="font-medium">{task.title}</span>
-              <span className="flex shrink-0 gap-1.5">
-                <PriorityPill priority={task.priority} />
-                <StatusPill tone={task.status === "waiting_on_client" ? "warn" : "quiet"}>
-                  {TASK_STATUS_LABELS[task.status]}
-                </StatusPill>
-              </span>
-            </div>
-          </Link>
-        </Card>
-      ))}
-    </ul>
-  );
+/** Numbers up to nine as words, as in running text. */
+function say(n: number): string {
+  return ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"][n] ?? String(n);
 }

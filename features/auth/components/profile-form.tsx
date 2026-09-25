@@ -27,7 +27,7 @@ export function ProfileForm({
         setError(result.error);
         return;
       }
-      setMessage("Saved.");
+      setMessage("Changes saved.");
     });
   }
 
@@ -41,7 +41,7 @@ export function ProfileForm({
           id="fullName"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          className="w-full min-h-[44px] px-4 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]"
+          className="w-full min-h-[44px] px-4"
         />
       </div>
       <div>
@@ -53,7 +53,7 @@ export function ProfileForm({
           type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className="w-full min-h-[44px] px-4 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]"
+          className="w-full min-h-[44px] px-4"
         />
       </div>
       {error ? (
@@ -61,11 +61,13 @@ export function ProfileForm({
           {error}
         </p>
       ) : null}
-      <p aria-live="polite" className="text-[var(--ok)]">
-        {message ?? " "}
-      </p>
-      <Button type="submit" thumb disabled={pending}>
-        {pending ? "Saving" : "Save"}
+      {message ? (
+        <p aria-live="polite" className="text-[var(--ok)] font-medium">
+          {message}
+        </p>
+      ) : null}
+      <Button type="submit" disabled={pending}>
+        {pending ? "Saving" : "Save changes"}
       </Button>
     </form>
   );

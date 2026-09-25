@@ -4,6 +4,7 @@ import { useOptimistic, useState } from "react";
 import { DocumentRowItem } from "./document-row";
 import { UploadSheet } from "./upload-sheet";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Panel, PanelEmpty, PanelList } from "@/components/ui/panel";
 import type { DocumentWithStatus } from "@/features/documents/types";
 
 /**
@@ -18,6 +19,7 @@ export function DocumentList({
   canDelete = false,
   uploadVariant = "primary",
   uploadLabel,
+  variant = "cards",
 }: {
   documents: DocumentWithStatus[];
   propertyId: string;
@@ -25,11 +27,49 @@ export function DocumentList({
   canDelete?: boolean;
   uploadVariant?: "primary" | "outline";
   uploadLabel?: string;
+  /** cards: the team layout. panel: one titled panel with the upload in its header. */
+  variant?: "cards" | "panel";
 }) {
   const [pendingUpload, setPendingUpload] = useState<DocumentWithStatus | null>(null);
   const [optimistic] = useOptimistic(
     pendingUpload ? [pendingUpload, ...documents] : documents,
   );
+
+  if (variant === "panel") {
+    return (
+      <Panel
+        title="Documents"
+        count={optimistic.length}
+        action={
+          <UploadSheet
+            propertyId={propertyId}
+            assets={assets}
+            variant="outline"
+            label={uploadLabel ?? "Upload"}
+            onOptimistic={setPendingUpload}
+          />
+        }
+      >
+        {optimistic.length === 0 ? (
+          <PanelEmpty>
+            No documents yet. Upload the title deed, Ejari, DEWA bills and anything with an
+            expiry date, and we will track it.
+          </PanelEmpty>
+        ) : (
+          <PanelList>
+            {optimistic.map((doc) => (
+              <DocumentRowItem
+                key={doc.id}
+                document={doc}
+                variant="row"
+                pending={doc.id.startsWith("pending-")}
+              />
+            ))}
+          </PanelList>
+        )}
+      </Panel>
+    );
+  }
 
   return (
     <>
