@@ -6,7 +6,7 @@ export default function PrivacyPage() {
   return (
     <>
       <h1>Privacy policy</h1>
-      <p className="updated">Last updated 25 September 2026</p>
+      <p className="updated">Last updated 26 September 2026</p>
 
       <h2>Who we are</h2>
       <p>
@@ -23,7 +23,8 @@ export default function PrivacyPage() {
         <li>Documents you or the team upload, such as title deeds, Ejari, DEWA bills, insurance and service contracts, with their expiry dates.</li>
         <li>The things in your home that you record, such as AC units and water heaters, with service and warranty dates.</li>
         <li>Your requests and the notes, updates and decisions in each one.</li>
-        <li>Basic technical data needed to keep you signed in and the service secure.</li>
+        <li>Enquiries you send through our website: your name, phone or email, community and message.</li>
+        <li>Basic technical data needed to keep you signed in and the service secure. For website enquiries we keep only a scrambled (hashed) form of your connection address, to stop abuse.</li>
       </ul>
 
       <h2>How we use it</h2>

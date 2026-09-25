@@ -11,6 +11,7 @@ const figtree = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://homemanager.ansy.in"),
   title: { default: "Dar", template: "%s | Dar" },
   description: "Everything about your home, in one place.",
   applicationName: "Dar",

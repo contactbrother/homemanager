@@ -6,10 +6,10 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
     <div className="min-h-dvh bg-[var(--bg)]">
       <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--bg)]/95 backdrop-blur pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-[var(--topbar-h)] max-w-3xl items-center justify-between px-5">
-          <Link href="/" aria-label="Dar home">
+          <Link href="/home" aria-label="Dar home">
             <DarWordmark />
           </Link>
-          <Link href="/profile" className="inline-flex min-h-[44px] items-center font-medium text-[var(--accent-text)]">
+          <Link href="/" className="inline-flex min-h-[44px] items-center font-medium text-[var(--accent-text)]">
             Back to Dar
           </Link>
         </div>

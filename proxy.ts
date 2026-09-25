@@ -47,8 +47,16 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // Legal pages are readable by anyone, signed in or not, client or team.
-  if (path === "/privacy" || path === "/terms") return response;
+  // The public website and legal pages are open to everyone, signed in or not.
+  const isOpen =
+    path === "/home" ||
+    path.startsWith("/home/") ||
+    path === "/privacy" ||
+    path === "/terms" ||
+    path === "/sitemap.xml" ||
+    path === "/robots.txt" ||
+    path === "/og";
+  if (isOpen) return response;
 
   const isPublic =
     path.startsWith("/sign-in") ||
@@ -57,7 +65,8 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     if (isPublic) return response;
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    // Visitors arriving at the main address see the website; deeper links still ask to sign in.
+    return NextResponse.redirect(new URL(path === "/" ? "/home" : "/sign-in", request.url));
   }
 
   // Role and deactivation, from the cookie when we already know them.
