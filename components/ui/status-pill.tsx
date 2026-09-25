@@ -17,7 +17,7 @@ export function StatusPill({
 }) {
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-[var(--r-sm)] border px-2 py-0.5 text-[length:var(--text-small)] font-medium ${tones[tone]}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-[var(--r-full)] border px-2.5 py-0.5 text-[length:var(--text-small)] font-medium ${tones[tone]}`}
     >
       {children}
     </span>

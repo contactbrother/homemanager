@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Build a web app called Dar where villa owners in Dubai see everything about their home in one place, and where the team managing their home can respond." (full text in `2026-08-31_Build_Plan_Dar_Home_Manager_MVP.md`, section 2.2)
+**Input**: User description: "Build a web app called Dar where villa owners in Dubai see everything about their home in one place, and where the team managing their home can respond." (full text in `docs/2026-08-31_Build_Plan_Dar_Home_Manager_MVP.md`, section 2.2)
 
 ## Clarifications
 

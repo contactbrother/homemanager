@@ -87,7 +87,7 @@ export default async function AdminClientPage({
               </div>
               <AssetList assets={assets} vendors={vendors} propertyId={property.id} canManage />
 
-              <h3 className="mt-6 text-[length:var(--text-lead)]">Tasks</h3>
+              <h3 className="mt-6 text-[length:var(--text-lead)]">Requests</h3>
               {tasks.length === 0 ? (
                 <EmptyState>No tasks yet.</EmptyState>
               ) : (

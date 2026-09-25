@@ -25,7 +25,7 @@ export function UploadSheet({
   assets?: Array<{ id: string; name: string }>;
   label?: string;
   /** Secondary on the admin client page, where create-property is the primary
-   *  action and two gold buttons would break Principle I. */
+   *  action and two primary buttons would break Principle I. */
   variant?: "primary" | "outline";
   /** Lets the list show the document before the server has stored it. FR-041. */
   onOptimistic?: (row: DocumentWithStatus | null) => void;

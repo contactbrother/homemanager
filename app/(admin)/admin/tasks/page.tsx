@@ -14,7 +14,7 @@ import {
 import { PriorityPill } from "@/features/tasks/components/priority-pill";
 import { formatDate } from "@/lib/format";
 
-export const metadata = { title: "Task queue" };
+export const metadata = { title: "Request queue" };
 
 export default async function AdminTasksPage({
   searchParams,
@@ -34,7 +34,7 @@ export default async function AdminTasksPage({
 
   return (
     <>
-      <h1 className="text-[length:var(--text-title)]">Task queue</h1>
+      <h1 className="text-[length:var(--text-title)]">Request queue</h1>
 
       <nav aria-label="Filter by status" className="mt-4 flex flex-wrap gap-2">
         <FilterLink

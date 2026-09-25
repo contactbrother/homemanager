@@ -1,48 +1,61 @@
 @import "tailwindcss";
 
 /* ============================================
-   Dar design tokens
-   Build plan section 4.1, corrected 31 August 2026 so the palette meets
-   WCAG 2.2 AA (FR-053). Measured ratios are recorded in section 4.1.
+   Dar design system, 25 September 2026.
+   Palm green on cool stone. White panels sit on a light stone page so that
+   structure reads on every screen size without heavy borders or shadows.
+   Every text pairing below is WCAG 2.2 AA or better (FR-053):
+   ink 16.3:1, ink-soft 8.7:1, mute 5.6:1 on white; mute 5.0:1 on the page;
+   white on palm 8.1:1; warn 5.6:1 and alert 5.7:1 on their tints.
    ============================================ */
 
 :root {
-  /* Colour. White surfaces, near-black ink, one signal green for action and
-     status. Contrast: ink on white 18:1, accent on white 5.9:1, white on accent 5.9:1. */
-  --ink:        #0B1411;  /* primary text */
-  --ink-soft:   #3A4441;  /* secondary text */
-  --mute:       #5F6A66;  /* tertiary text, 5.6:1 on white */
-  --accent:     #0B7A4B;  /* primary action fill, links, active state */
-  --accent-text:#086A41;  /* accent for text on white */
-  --accent-soft:#E4F3EB;  /* accent tint for active nav and ok pills */
-  --bg:         #FFFFFF;  /* page */
-  --surface:    #FFFFFF;  /* cards */
-  --surface-2:  #F4F6F5;  /* inset areas, inputs at rest */
-  --line:       #D5DBD8;  /* borders, strong enough to read as edges */
-  --line-strong:#0B1411;  /* emphasised borders */
+  /* Text */
+  --ink:         #18221E;
+  --ink-soft:    #434E49;
+  --mute:        #5F6A65;
+
+  /* Brand. Palm is the only action colour. Sand appears in the Dar mark only. */
+  --accent:      #1E5A44;  /* palm: primary fill, active state */
+  --accent-text: #1A4F3C;  /* palm for text and links */
+  --accent-soft: #E2EDE7;  /* palm tint: active nav, ok pills */
+  --sand:        #D8C08A;
+
+  /* Surfaces */
+  --bg:          #F1F3F0;  /* stone page */
+  --surface:     #FFFFFF;  /* panels */
+  --surface-2:   #F6F7F5;  /* insets, hover, inputs at rest */
+  --line:        #DCE1DD;  /* dividers inside panels */
+  --line-strong: #C9D0CC;  /* control borders */
 
   /* Status */
-  --ok:         #0B7A4B;
-  --ok-soft:    #E4F3EB;
-  --warn:       #A05A00;
-  --warn-soft:  #FFF1DB;
-  --alert:      #C81E1E;
-  --alert-soft: #FDE8E8;
+  --ok:          #1E5A44;
+  --ok-soft:     #E2EDE7;
+  --warn:        #8F5200;
+  --warn-soft:   #FDF1DC;
+  --alert:       #B42318;
+  --alert-soft:  #FCEBE9;
 
-  /* Names kept from the first palette so existing markup keeps working. */
-  --gold:       var(--accent);
-  --gold-text:  var(--accent-text);
-  --ivory:      var(--bg);
+  /* Radius, by rank: pills round, controls 10, panels 14. */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-full: 999px;
 
-  /* Radius: tight. */
-  --r-sm: 4px;
-  --r-md: 8px;
-  --r-lg: 12px;
+  /* Layout */
+  --tabbar-h: 64px;
+  --topbar-h: 56px;
 
   /* Motion */
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
   --fast: 140ms;
   --base: 220ms;
+}
+
+@theme {
+  /* Three layouts: phone below 768px, tablet 768 to 1199px, desktop 1200px up. */
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 75rem;
 }
 
 @theme inline {
@@ -62,48 +75,53 @@
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);
 
-  --font-display: var(--font-fraunces);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-figtree);
+  --font-display: var(--font-figtree);
 
-  /* Type scale: 32 / 24 / 20 / 17 / 15 / 13 / 11 */
-  --text-display: 2rem;
-  --text-title: 1.5rem;
-  --text-heading: 1.25rem;
+  /* Type scale: 28 / 22 / 18 / 17 / 16 / 14 / 12.
+     Body is 16px everywhere so iOS never zooms into a form field. */
+  --text-display: 1.75rem;
+  --text-title: 1.375rem;
+  --text-heading: 1.125rem;
   --text-lead: 1.0625rem;
-  --text-body: 0.9375rem;
-  --text-small: 0.8125rem;
-  --text-tiny: 0.6875rem;
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+  --text-tiny: 0.75rem;
 }
 
-/* The palette is a single light scheme by design. It does not invert. */
+/* A single light scheme by design. */
 html {
   color-scheme: light;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-figtree), system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: var(--text-body);
-  line-height: 1.5;
-}
-
-@media (min-width: 768px) {
-  body { font-size: 1rem; }
+  line-height: 1.55;
+  font-feature-settings: "ss01";
 }
 
 h1, h2, h3 {
-  font-family: var(--font-fraunces), Georgia, serif;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-family: var(--font-figtree), system-ui, sans-serif;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+@media (min-width: 48rem) {
+  h1 { font-size: 1.625rem; }
 }
 
 input, textarea, select {
   font: inherit;
+  font-size: 1rem;
   color: var(--ink);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--r-md);
   transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
 }
@@ -114,6 +132,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 }
 ::placeholder { color: var(--mute); }
 
+label { font-weight: 500; }
+
 a { text-underline-offset: 3px; }
 
 /* Focus is always visible and meets the 3:1 contrast rule (FR-054). */
@@ -123,17 +143,19 @@ a { text-underline-offset: 3px; }
   border-radius: var(--r-sm);
 }
 
-/* Motion: elements scale and settle. They do not slide in from off screen, which is
-   why the keyframe below moves 4px at most and does its work with scale. */
+/* Motion: things settle into place; nothing slides in from off screen. */
 @keyframes settle {
   from { transform: scale(0.985); opacity: 0; }
   to   { transform: none;         opacity: 1; }
+}
+@keyframes rise {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: none;             opacity: 1; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .settle { animation: settle var(--base) var(--ease) both; }
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

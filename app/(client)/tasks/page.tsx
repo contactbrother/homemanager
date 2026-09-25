@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { listTasks } from "@/features/tasks/queries";
-import { listProperties } from "@/features/properties/queries";
-import { NewTaskSheet } from "@/features/tasks/components/new-task-sheet";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -9,17 +7,17 @@ import { PriorityPill } from "@/features/tasks/components/priority-pill";
 import { TASK_STATUS_LABELS, OPEN_TASK_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 
-export const metadata = { title: "Tasks" };
+export const metadata = { title: "Requests" };
 
 export default async function TasksPage() {
-  const [tasks, properties] = await Promise.all([listTasks(), listProperties()]);
+  const tasks = await listTasks();
 
   return (
     <>
-      <h1 className="text-[length:var(--text-title)]">Tasks</h1>
+      <h1 className="text-[length:var(--text-title)]">Requests</h1>
 
       {tasks.length === 0 ? (
-        <EmptyState>No tasks yet.</EmptyState>
+        <EmptyState>No requests yet. Use New request to send us anything that needs doing at home.</EmptyState>
       ) : (
         <ul className="mt-6 space-y-3 settle">
           {tasks.map((task) => (
@@ -50,12 +48,6 @@ export default async function TasksPage() {
           ))}
         </ul>
       )}
-
-      <div className="fixed bottom-[56px] inset-x-0 border-t border-[var(--line)] bg-[var(--surface)]">
-        <div className="mx-auto max-w-md px-5 py-3">
-          <NewTaskSheet properties={properties} />
-        </div>
-      </div>
     </>
   );
 }

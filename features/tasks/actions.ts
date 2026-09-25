@@ -4,8 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/supabase/types";
 import {
-  SIGNED_URL_TTL,
-  STORAGE_BUCKET,
   TASK_PRIORITIES,
   type TaskPriority,
   type TaskStatus,
@@ -57,20 +55,6 @@ export async function createTask(input: {
   revalidatePath("/");
   revalidatePath("/admin/tasks");
   return ok({ id: row.id });
-}
-
-/**
- * A short-lived signed URL for a recording made before voice notes were retired.
- * The storage policies decide who may read the file.
- */
-export async function getVoiceUrl(path: string): Promise<ActionResult<{ url: string }>> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .createSignedUrl(path, SIGNED_URL_TTL);
-
-  if (error || !data) return fail("We could not load that recording. Try again.");
-  return ok({ url: data.signedUrl });
 }
 
 /** FR-028. Client or team. */

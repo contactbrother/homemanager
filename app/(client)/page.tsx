@@ -3,7 +3,6 @@ import { requireClient } from "@/features/auth/guards";
 import { listRenewals } from "@/features/renewals/queries";
 import { listTasks } from "@/features/tasks/queries";
 import { listProperties } from "@/features/properties/queries";
-import { NewTaskSheet } from "@/features/tasks/components/new-task-sheet";
 import { RenewalList } from "@/features/renewals/components/renewal-list";
 import { PriorityPill } from "@/features/tasks/components/priority-pill";
 import { Card } from "@/components/ui/card";
@@ -68,13 +67,6 @@ export default async function HomePage() {
           <TaskCards tasks={handling} />
         </section>
       ) : null}
-
-      {/* FR-034. One primary action, reachable without navigating first. */}
-      <div className="fixed bottom-[56px] inset-x-0 border-t border-[var(--line)] bg-[var(--surface)]">
-        <div className="mx-auto max-w-md px-5 py-3">
-          <NewTaskSheet properties={properties} />
-        </div>
-      </div>
     </>
   );
 }

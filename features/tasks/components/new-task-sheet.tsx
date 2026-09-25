@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { createTask } from "@/features/tasks/actions";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
@@ -13,7 +14,14 @@ import type { Property } from "@/lib/supabase/types";
  * FR-024, FR-030, revised. A request is a title, optional detail and a priority.
  * The property selector appears only when there is more than one to choose between.
  */
-export function NewTaskSheet({ properties }: { properties: Property[] }) {
+export function NewTaskSheet({
+  properties,
+  trigger = "inline",
+}: {
+  properties: Property[];
+  /** inline: a normal button. sidebar: rail and sidebar form. fab: floats above the phone tab bar. */
+  trigger?: "inline" | "sidebar" | "fab";
+}) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -22,8 +30,11 @@ export function NewTaskSheet({ properties }: { properties: Property[] }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
+  const pathname = usePathname();
 
   if (properties.length === 0) return null;
+  // A request page has its own reply bar at the bottom; the floating button would cover it.
+  if (trigger === "fab" && /^\/tasks\/.+/.test(pathname)) return null;
 
   function send() {
     setError(null);
@@ -49,8 +60,34 @@ export function NewTaskSheet({ properties }: { properties: Property[] }) {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Request something</Button>
-      <Sheet open={open} onClose={() => setOpen(false)} title="Request something">
+      {trigger === "inline" ? (
+        <Button onClick={() => setOpen(true)}>
+          <Plus aria-hidden size={18} strokeWidth={2.25} />
+          New request
+        </Button>
+      ) : null}
+      {trigger === "sidebar" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="New request"
+          className="inline-flex h-11 w-11 items-center justify-center gap-2 rounded-[var(--r-md)] bg-[var(--accent)] font-semibold text-white transition-[transform,background-color] duration-[var(--fast)] hover:bg-[var(--accent-text)] active:scale-[0.97] lg:w-full"
+        >
+          <Plus aria-hidden size={20} strokeWidth={2.25} />
+          <span className="hidden lg:inline">New request</span>
+        </button>
+      ) : null}
+      {trigger === "fab" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="md:hidden fixed right-5 z-40 bottom-[calc(var(--tabbar-h)+env(safe-area-inset-bottom)+16px)] inline-flex h-14 items-center gap-2 rounded-[var(--r-full)] bg-[var(--accent)] pl-5 pr-6 font-semibold text-white shadow-[0_6px_20px_rgba(24,34,30,0.22)] active:scale-[0.97] transition-transform duration-[var(--fast)]"
+        >
+          <Plus aria-hidden size={20} strokeWidth={2.25} />
+          New request
+        </button>
+      ) : null}
+      <Sheet open={open} onClose={() => setOpen(false)} title="New request">
         <form
           className="space-y-4"
           onSubmit={(event) => {

@@ -1,7 +1,8 @@
-import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { requireAdmin } from "@/features/auth/guards";
 import { signOut } from "@/features/auth/actions";
-import { AdminNav } from "@/components/nav/admin-nav";
+import { AppShell } from "@/components/shell/app-shell";
+import { TEAM_NAV } from "@/components/shell/nav-items";
 
 export default async function AdminLayout({
   children,
@@ -11,27 +12,31 @@ export default async function AdminLayout({
   await requireAdmin();
 
   return (
-    <div className="min-h-dvh flex flex-col">
-      <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--surface)]">
-        <nav className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center gap-4">
-          <Link
-            href="/admin"
-            className="font-display text-[length:var(--text-heading)] font-semibold tracking-tight"
+    <AppShell
+      items={TEAM_NAV}
+      homeHref="/admin"
+      team
+      width="wide"
+      sidebarFooter={
+        <form action={signOut}>
+          <button className="flex w-full min-h-[60px] flex-col items-center justify-center gap-1 rounded-[var(--r-md)] px-1 text-[length:var(--text-tiny)] font-medium text-[var(--ink-soft)] hover:bg-[var(--surface-2)] lg:min-h-[44px] lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:text-[length:var(--text-body)]">
+            <LogOut aria-hidden size={20} strokeWidth={1.75} />
+            <span className="leading-tight">Sign out</span>
+          </button>
+        </form>
+      }
+      topBarEnd={
+        <form action={signOut}>
+          <button
+            aria-label="Sign out"
+            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-[var(--r-md)] text-[var(--ink-soft)] hover:bg-[var(--surface-2)]"
           >
-            Dar
-          </Link>
-          <span className="rounded-[var(--r-sm)] border border-[var(--line)] px-1.5 py-0.5 text-[length:var(--text-tiny)] font-semibold uppercase tracking-wide text-[var(--mute)]">
-            Team
-          </span>
-          <AdminNav />
-          <form action={signOut} className="ml-auto">
-            <button className="min-h-[44px] px-2 text-[var(--ink-soft)] hover:text-[var(--ink)]">
-              Sign out
-            </button>
-          </form>
-        </nav>
-      </header>
-      <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 flex-1">{children}</main>
-    </div>
+            <LogOut aria-hidden size={20} strokeWidth={1.75} />
+          </button>
+        </form>
+      }
+    >
+      {children}
+    </AppShell>
   );
 }

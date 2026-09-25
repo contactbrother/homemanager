@@ -5,7 +5,6 @@ import { requireClient } from "@/features/auth/guards";
 import { StatusPill } from "@/components/ui/status-pill";
 import { TASK_STATUS_LABELS, OPEN_TASK_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
-import { VoiceNote } from "@/features/tasks/components/voice-note";
 import { PriorityPill } from "@/features/tasks/components/priority-pill";
 
 export default async function TaskPage({
@@ -40,11 +39,6 @@ export default async function TaskPage({
       </div>
 
       {task.body ? <p className="mt-4">{task.body}</p> : null}
-      {task.voice_path ? (
-        <div className="mt-4">
-          <VoiceNote path={task.voice_path} label="Your voice note" />
-        </div>
-      ) : null}
 
       <h2 className="mt-8 text-[length:var(--text-heading)]">History</h2>
       <div className="mt-4">

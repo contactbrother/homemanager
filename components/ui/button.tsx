@@ -12,13 +12,13 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 /**
  * One primary action per screen (Principle I). Primary is the accent fill with a
- * white label at 5.9:1. Pressed state darkens slightly and scales. FR-053.
+ * white label at 8.1:1. Pressed state darkens slightly and scales. FR-053.
  */
 const styles: Record<Variant, string> = {
   primary:
     "bg-[var(--accent)] text-white font-semibold hover:bg-[var(--accent-text)]",
   outline:
-    "bg-[var(--surface)] text-[var(--ink)] font-medium border border-[var(--line-strong)] hover:bg-[var(--surface-2)]",
+    "bg-[var(--surface)] text-[var(--ink)] font-medium border border-[var(--line-strong)] hover:border-[var(--ink-soft)] hover:bg-[var(--surface-2)]",
   text: "bg-transparent text-[var(--accent-text)] font-medium hover:underline",
   danger:
     "bg-transparent text-[var(--alert)] font-medium border border-[var(--alert)] hover:bg-[var(--alert-soft)]",

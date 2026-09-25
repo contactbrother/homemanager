@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { X } from "lucide-react";
 
 /**
- * Bottom sheet for create and detail flows on mobile, not full page navigation.
+ * Bottom sheet on phones, centred dialog on larger screens, for create and edit flows.
  *
  * Traps focus while open by design, and releases it on close, restoring focus to
  * whatever opened it. FR-054 requires both: a trap that never releases is the failure
@@ -80,10 +81,12 @@ export function Sheet({
 
   if (!open) return null;
 
+  // Phone: a bottom sheet with a grab handle. Tablet and desktop: a centred dialog.
+  // Both cap their height and scroll inside, so long forms never run off screen.
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center md:justify-center md:p-6">
       <div
-        className="absolute inset-0 bg-[var(--ink)]/40"
+        className="absolute inset-0 bg-[var(--ink)]/45"
         onClick={onClose}
         aria-hidden
       />
@@ -92,23 +95,28 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="relative w-full sm:max-w-md bg-[var(--surface)] rounded-t-[var(--r-lg)] sm:rounded-[var(--r-lg)] p-5 pb-8 shadow-lg
-                   motion-safe:animate-[sheet_var(--base)_var(--ease)]"
+        className="relative flex w-full max-h-[92dvh] flex-col bg-[var(--surface)] rounded-t-[20px]
+                   md:max-w-lg md:max-h-[85dvh] md:rounded-[var(--r-lg)] shadow-[0_12px_40px_rgba(24,34,30,0.18)]
+                   motion-safe:animate-[rise_var(--base)_var(--ease)] md:motion-safe:animate-[settle_var(--base)_var(--ease)]"
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="md:hidden flex justify-center pt-2.5" aria-hidden>
+          <span className="h-1 w-10 rounded-[var(--r-full)] bg-[var(--line-strong)]" />
+        </div>
+        <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-3 md:px-6 md:py-4">
           <h2 className="text-[length:var(--text-heading)]">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 text-[var(--mute)]"
+            className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-[var(--r-md)] text-[var(--mute)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
           >
-            ✕
+            <X aria-hidden size={20} />
           </button>
         </div>
-        <div className="mt-4">{children}</div>
+        <div className="overflow-y-auto overscroll-contain px-5 pt-5 pb-[calc(24px+env(safe-area-inset-bottom))] md:px-6 md:pb-6">
+          {children}
+        </div>
       </div>
-      <style>{`@keyframes sheet{from{transform:scale(.98) translateY(8px);opacity:0}to{transform:none;opacity:1}}`}</style>
     </div>
   );
 }
