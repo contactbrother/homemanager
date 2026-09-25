@@ -7,6 +7,8 @@ import { SecondaryCta, WhatsAppCta } from "@/features/site/components/cta";
 import { HeroArch, ServiceIcon } from "@/features/site/components/illustrations";
 import { PhoneMock } from "@/features/site/components/phone-mock";
 import { COMMUNITIES, SERVICES, SITE_FAQ, whatsappLink } from "@/features/site/content";
+import { COMMUNITY_PAGES } from "@/features/site/communities";
+import { GUIDES } from "@/features/site/guides";
 
 export const metadata: Metadata = pageMeta({
   title: "Dar | Home management for Dubai villas",
@@ -148,7 +150,36 @@ export default function HomePage() {
         </ul>
       </Section>
 
-      <Section title="Questions" className="pt-0 md:pt-0">
+      <Section title="Where we work" lead="Established villa communities, each with its own homes and rules." className="pt-0 md:pt-0">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 md:gap-5">
+          {COMMUNITY_PAGES.map((c) => (
+            <li key={c.slug}>
+              <Link href={`/home/communities/${c.slug}`} className="group flex items-center justify-between gap-3 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] p-5 font-semibold transition-colors hover:border-[var(--accent)]">
+                {c.name}
+                <ArrowRight aria-hidden size={18} className="text-[var(--accent-text)] transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="Guides" lead="Practical help for running a villa in Dubai, checked against official sources." className="border-y border-[var(--line)] bg-[var(--surface)]">
+        <ul className="grid gap-3 md:grid-cols-3 md:gap-5">
+          {GUIDES.slice(0, 3).map((g) => (
+            <li key={g.slug}>
+              <Link href={`/home/guides/${g.slug}`} className="flex h-full flex-col rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--bg)] p-5 transition-colors hover:border-[var(--accent)]">
+                <span className="font-semibold">{g.title}</span>
+                <span className="mt-2 text-[length:var(--text-small)] text-[var(--ink-soft)]">{g.description}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-5">
+          <Link href="/home/guides" className="font-semibold text-[var(--accent-text)] underline underline-offset-4">All guides</Link>
+        </p>
+      </Section>
+
+      <Section title="Questions">
         <FaqList items={SITE_FAQ.slice(0, 5)} />
         <p className="mt-5">
           <Link href="/home/faq" className="font-semibold text-[var(--accent-text)] underline underline-offset-4">

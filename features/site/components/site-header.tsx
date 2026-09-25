@@ -11,7 +11,8 @@ const NAV = [
   { href: "/home/documents-and-renewals", label: "Documents" },
   { href: "/home/home-watch", label: "Home watch" },
   { href: "/home/how-it-works", label: "How it works" },
-  { href: "/home/faq", label: "FAQ" },
+  { href: "/home/communities", label: "Areas" },
+  { href: "/home/guides", label: "Guides" },
 ];
 
 export function SiteHeader({ whatsapp }: { whatsapp: string | null }) {
@@ -39,9 +40,9 @@ export function SiteHeader({ whatsapp }: { whatsapp: string | null }) {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  aria-current={pathname === item.href ? "page" : undefined}
+                  aria-current={pathname === item.href || pathname.startsWith(`${item.href}/`) ? "page" : undefined}
                   className={`rounded-[var(--r-md)] px-3 py-2 font-medium transition-colors hover:text-[var(--ink)] ${
-                    pathname === item.href ? "text-[var(--accent-text)]" : "text-[var(--ink-soft)]"
+                    pathname === item.href || pathname.startsWith(`${item.href}/`) ? "text-[var(--accent-text)]" : "text-[var(--ink-soft)]"
                   }`}
                 >
                   {item.label}
@@ -85,6 +86,11 @@ export function SiteHeader({ whatsapp }: { whatsapp: string | null }) {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link href="/home/faq" className="flex min-h-[56px] items-center text-[1.125rem] font-semibold">
+                Questions and answers
+              </Link>
+            </li>
             <li>
               <Link href="/home/about" className="flex min-h-[56px] items-center text-[1.125rem] font-semibold">
                 About Dar

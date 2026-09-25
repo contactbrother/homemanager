@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { DarWordmark } from "@/components/brand/dar-mark";
-import { COMMUNITIES, SERVICES } from "@/features/site/content";
+import { SERVICES } from "@/features/site/content";
+import { COMMUNITY_PAGES } from "@/features/site/communities";
+import { GUIDES } from "@/features/site/guides";
 
 export function SiteFooter({ whatsapp }: { whatsapp: string | null }) {
   const col = "space-y-2.5";
   const link = "text-[var(--ink-soft)] hover:text-[var(--ink)]";
   return (
     <footer className="border-t border-[var(--line)] bg-[var(--surface)]">
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 pb-[calc(96px+env(safe-area-inset-bottom))] md:grid-cols-4 md:px-8 md:pb-12">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 pb-[calc(96px+env(safe-area-inset-bottom))] md:grid-cols-3 lg:grid-cols-5 md:px-8 md:pb-12">
         <div>
           <DarWordmark />
           <p className="mt-4 max-w-xs text-[var(--ink-soft)]">
@@ -34,9 +36,23 @@ export function SiteFooter({ whatsapp }: { whatsapp: string | null }) {
         <div>
           <h2 className="mb-3 text-[length:var(--text-small)] font-semibold text-[var(--mute)]">Areas we serve</h2>
           <ul className={col}>
-            {COMMUNITIES.map((c) => (
-              <li key={c} className="text-[var(--ink-soft)]">
-                {c}
+            {COMMUNITY_PAGES.map((c) => (
+              <li key={c.slug}>
+                <Link href={`/home/communities/${c.slug}`} className={link}>
+                  {c.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2 className="mb-3 text-[length:var(--text-small)] font-semibold text-[var(--mute)]">Guides</h2>
+          <ul className={col}>
+            {GUIDES.map((g) => (
+              <li key={g.slug}>
+                <Link href={`/home/guides/${g.slug}`} className={link}>
+                  {g.title}
+                </Link>
               </li>
             ))}
           </ul>

@@ -9,6 +9,7 @@ import { ServiceIcon } from "@/features/site/components/illustrations";
 import { JsonLd } from "@/features/site/components/json-ld";
 import { COMMUNITIES, SERVICES, SITE_URL, whatsappLink } from "@/features/site/content";
 import { SERVICE_DETAILS } from "@/features/site/service-details";
+import { COMMUNITY_PAGES } from "@/features/site/communities";
 
 export const dynamicParams = false;
 
@@ -77,7 +78,13 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
           ))}
         </ul>
         <p className="mt-6 text-[var(--ink-soft)]">
-          Available in {COMMUNITIES.slice(0, -1).join(", ")} and {COMMUNITIES[COMMUNITIES.length - 1]}.
+          Available in{" "}
+          {COMMUNITY_PAGES.map((c, i) => (
+            <span key={c.slug}>
+              <Link href={`/home/communities/${c.slug}`} className="font-medium text-[var(--accent-text)] underline underline-offset-4">{c.name}</Link>
+              {i < COMMUNITY_PAGES.length - 2 ? ", " : i === COMMUNITY_PAGES.length - 2 ? " and " : "."}
+            </span>
+          ))}
         </p>
       </Section>
 
