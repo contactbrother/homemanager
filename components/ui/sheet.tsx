@@ -113,7 +113,7 @@ export function Sheet({
             <X aria-hidden size={20} />
           </button>
         </div>
-        <div className="overflow-y-auto overscroll-contain px-5 pt-5 pb-[calc(24px+env(safe-area-inset-bottom))] md:px-6 md:pb-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-5 pb-[calc(24px+env(safe-area-inset-bottom))] md:px-6 md:pb-6">
           {children}
         </div>
       </div>
