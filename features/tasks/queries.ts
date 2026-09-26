@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import {
   OPEN_TASK_STATUSES,
@@ -8,7 +9,7 @@ import {
 import type { Task, TaskMessageWithAuthor, TaskWithProperty } from "./types";
 
 /** FR-029. Open tasks before completed ones, newest first within each group. */
-export async function listTasks(): Promise<TaskWithProperty[]> {
+async function listTasksUncached(): Promise<TaskWithProperty[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("tasks")
@@ -45,7 +46,7 @@ export async function listAllTasks(
   return sortOpenFirst((data as TaskWithProperty[]) ?? []);
 }
 
-export async function getTask(id: string): Promise<TaskWithProperty | null> {
+async function getTaskUncached(id: string): Promise<TaskWithProperty | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("tasks")
@@ -79,3 +80,9 @@ function sortOpenFirst<T extends { status: TaskStatus; priority: TaskPriority }>
   const closed = rows.filter((t) => !OPEN_TASK_STATUSES.includes(t.status));
   return [...open, ...closed];
 }
+
+/** Deduplicated within one request: the layout and the page share one lookup. */
+export const listTasks = cache(listTasksUncached);
+
+/** Deduplicated within one request: the layout and the page share one lookup. */
+export const getTask = cache(getTaskUncached);

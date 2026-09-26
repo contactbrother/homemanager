@@ -1,23 +1,27 @@
+import { cache } from "react";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/supabase/types";
 
-/** The signed-in person, or null. */
-export async function getProfile(): Promise<Profile | null> {
+/**
+ * The signed-in person, or null. Looked up once per request however many times the
+ * layout and page ask. getClaims verifies the session token locally when the project
+ * uses signing keys, and falls back to asking the Auth server otherwise.
+ */
+export const getProfile = cache(async (): Promise<Profile | null> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const { data: auth } = await supabase.auth.getClaims();
+  const userId = auth?.claims?.sub;
+  if (!userId) return null;
 
   const { data } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .maybeSingle();
 
   return (data as Profile) ?? null;
-}
+});
 
 export async function requireSession(): Promise<Profile> {
   const profile = await getProfile();

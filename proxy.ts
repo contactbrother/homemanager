@@ -18,6 +18,22 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/env";
  * stale cookie, a deactivated client's queries return nothing. See analyze finding R1.
  */
 export async function proxy(request: NextRequest) {
+  const started = Date.now();
+  const path = request.nextUrl.pathname;
+
+  // The public website and legal pages are open to everyone, signed in or not, and
+  // never need the session, so they skip the database entirely.
+  if (
+    path === "/home" ||
+    path.startsWith("/home/") ||
+    path === "/privacy" ||
+    path === "/terms" ||
+    path === "/sitemap.xml" ||
+    path === "/robots.txt" ||
+    path === "/og"
+  ) {
+    return NextResponse.next();
+  }
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -41,22 +57,10 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Verified locally with the project's signing keys where available (no network).
+  const { data: auth } = await supabase.auth.getClaims();
+  const user = auth?.claims?.sub ? { id: auth.claims.sub } : null;
 
-  const path = request.nextUrl.pathname;
-
-  // The public website and legal pages are open to everyone, signed in or not.
-  const isOpen =
-    path === "/home" ||
-    path.startsWith("/home/") ||
-    path === "/privacy" ||
-    path === "/terms" ||
-    path === "/sitemap.xml" ||
-    path === "/robots.txt" ||
-    path === "/og";
-  if (isOpen) return response;
 
   const isPublic =
     path.startsWith("/sign-in") ||
@@ -112,6 +116,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
+  if (process.env.NODE_ENV === "production" && !request.headers.get("next-router-prefetch")) {
+    console.info(`[timing] proxy ${path} ${Date.now() - started}ms`);
+  }
   return response;
 }
 

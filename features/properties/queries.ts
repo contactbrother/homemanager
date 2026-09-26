@@ -1,9 +1,10 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Property } from "@/lib/supabase/types";
 
 /** Row level security decides which properties come back. There is no owner filter
  *  here and there must not be: the policy is the single mechanism. Principle IV. */
-export async function listProperties(): Promise<Property[]> {
+async function listPropertiesUncached(): Promise<Property[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("properties")
@@ -12,7 +13,7 @@ export async function listProperties(): Promise<Property[]> {
   return (data as Property[]) ?? [];
 }
 
-export async function getProperty(id: string): Promise<Property | null> {
+async function getPropertyUncached(id: string): Promise<Property | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("properties")
@@ -31,3 +32,9 @@ export async function listPropertiesForOwner(ownerId: string): Promise<Property[
     .order("created_at", { ascending: true });
   return (data as Property[]) ?? [];
 }
+
+/** Deduplicated within one request: the layout and the page share one lookup. */
+export const listProperties = cache(listPropertiesUncached);
+
+/** Deduplicated within one request: the layout and the page share one lookup. */
+export const getProperty = cache(getPropertyUncached);
