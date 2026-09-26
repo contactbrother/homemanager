@@ -53,8 +53,16 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
                   : "text-[var(--ink-soft)] font-medium hover:bg-[var(--surface-2)] hover:text-[var(--ink)]",
               ].join(" ")}
             >
-              <Icon aria-hidden size={20} strokeWidth={active ? 2.25 : 1.75} className="shrink-0" />
-              <span className="leading-tight text-center lg:text-left">{item.label}</span>
+              <span className="relative shrink-0">
+                <Icon aria-hidden size={20} strokeWidth={active ? 2.25 : 1.75} />
+                <Badge count={item.badge} className="lg:hidden" />
+              </span>
+              <span className="leading-tight text-center lg:flex-1 lg:text-left">{item.label}</span>
+              {item.badge ? (
+                <span className="hidden min-w-[22px] rounded-full bg-[var(--alert)] px-1.5 text-center text-[length:var(--text-tiny)] font-bold leading-[22px] text-white lg:inline-block">
+                  {item.badge}
+                </span>
+              ) : null}
             </Link>
           </li>
         );
@@ -92,14 +100,30 @@ export function TabBar({ items }: { items: NavItem[] }) {
                     active ? "bg-[var(--accent-soft)]" : "",
                   ].join(" ")}
                 >
-                  <Icon aria-hidden size={20} strokeWidth={active ? 2.25 : 1.75} />
+                  <span className="relative">
+                    <Icon aria-hidden size={20} strokeWidth={active ? 2.25 : 1.75} />
+                    <Badge count={item.badge} />
+                  </span>
                 </span>
                 {item.label}
+                {item.badge ? <span className="sr-only">, {item.badge} with new updates</span> : null}
               </Link>
             </li>
           );
         })}
       </ul>
     </nav>
+  );
+}
+
+function Badge({ count, className = "" }: { count?: number; className?: string }) {
+  if (!count) return null;
+  return (
+    <span
+      aria-hidden
+      className={`absolute -right-2.5 -top-2 min-w-[18px] rounded-full border-2 border-[var(--surface)] bg-[var(--alert)] px-1 text-center text-[10px] font-bold leading-[14px] text-white ${className}`}
+    >
+      {count > 9 ? "9+" : count}
+    </span>
   );
 }

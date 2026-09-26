@@ -1,6 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { StatusPill } from "@/components/ui/status-pill";
 import { TASK_STATUS_LABELS, TASK_STATUS_LABELS_TEAM } from "@/lib/constants";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatRelative } from "@/lib/format";
 import type { TaskMessageWithAuthor } from "@/features/tasks/types";
 
 /**
@@ -18,14 +21,36 @@ export function TaskHistory({
   variant?: "list" | "timeline";
 }) {
   const labels = audience === "team" ? TASK_STATUS_LABELS_TEAM : TASK_STATUS_LABELS;
+  const [showAll, setShowAll] = useState(false);
+
+  // On a phone, open at the latest message, the way a chat app does.
+  useEffect(() => {
+    if (variant !== "timeline") return;
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      document.getElementById("thread-end")?.scrollIntoView({ block: "end" });
+    }
+  }, [variant]);
 
   if (variant === "timeline") {
+    const LIMIT = 20;
+    const visible = showAll ? entries : entries.slice(-LIMIT);
+    const hidden = entries.length - visible.length;
     if (entries.length === 0) {
       return <p className="text-[var(--mute)]">No updates yet. We will post here as soon as we start.</p>;
     }
     return (
+      <>
+      {hidden > 0 ? (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="mb-5 inline-flex min-h-[40px] items-center rounded-[var(--r-full)] border border-[var(--line)] bg-[var(--surface)] px-4 text-[length:var(--text-small)] font-semibold text-[var(--ink-soft)] hover:text-[var(--ink)]"
+        >
+          Show {hidden} earlier {hidden === 1 ? "update" : "updates"}
+        </button>
+      ) : null}
       <ol className="relative space-y-5 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-[var(--line)]">
-        {entries.map((entry) => {
+        {visible.map((entry) => {
           const team = entry.profiles?.role === "admin";
           const who = team ? "Dar" : "You";
           return (
@@ -37,7 +62,10 @@ export function TaskHistory({
                 }`}
               />
               <p className="text-[length:var(--text-small)] text-[var(--mute)]">
-                <span className="font-semibold text-[var(--ink-soft)]">{who}</span>, {formatDate(entry.created_at)}
+                <span className="font-semibold text-[var(--ink-soft)]">{who}</span>,{" "}
+                <time dateTime={entry.created_at} title={formatDate(entry.created_at)} suppressHydrationWarning>
+                  {formatRelative(entry.created_at)}
+                </time>
               </p>
               {entry.status_to ? (
                 <p className="mt-1">
@@ -57,6 +85,7 @@ export function TaskHistory({
           );
         })}
       </ol>
+      </>
     );
   }
 

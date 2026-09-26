@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTask, listTaskHistory } from "@/features/tasks/queries";
 import { TaskThread } from "@/features/tasks/components/task-thread";
+import { LiveThread } from "@/features/tasks/components/live-thread";
+import { getMyActivity } from "@/features/tasks/activity";
 import { PriorityPill } from "@/features/tasks/components/priority-pill";
 import { requireClient } from "@/features/auth/guards";
 import { statusTone } from "@/features/tasks/status-tone";
@@ -31,7 +33,8 @@ export default async function TaskPage({
   const task = await getTask(id);
   if (!task) notFound();
 
-  const history = await listTaskHistory(id);
+  const [history, activity] = await Promise.all([listTaskHistory(id), getMyActivity()]);
+  const hadUnread = (activity.get(id)?.unread ?? 0) > 0;
   const status = TASK_STATUS_LABELS[task.status];
   const facts: Array<[string, string]> = [
     ["Home", task.properties?.name ?? ""],
@@ -42,6 +45,7 @@ export default async function TaskPage({
 
   return (
     <div key={id}>
+      <LiveThread taskId={id} hadUnread={hadUnread} />
       <ScreenBar backHref="/tasks" backLabel="All requests" title={task.title} subtitle={status} />
 
       <header className="mb-5 hidden md:block">

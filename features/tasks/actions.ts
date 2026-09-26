@@ -164,3 +164,16 @@ export async function renameTask(input: {
   revalidatePath(`/admin/tasks/${input.taskId}`);
   return ok();
 }
+
+/** Opening a request marks everything in it as read for this person. */
+export async function markTaskRead(taskId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getClaims();
+  const userId = auth?.claims?.sub;
+  if (!userId) return fail("You are not signed in.");
+  const { error } = await supabase
+    .from("task_reads")
+    .upsert({ user_id: userId, task_id: taskId, last_read_at: new Date().toISOString() }, { onConflict: "user_id,task_id" });
+  if (error) return fail("Could not update read status.");
+  return ok();
+}

@@ -4,6 +4,9 @@ import { listTasks } from "@/features/tasks/queries";
 import { listProperties } from "@/features/properties/queries";
 import { RenewalRows } from "@/features/renewals/components/renewal-rows";
 import { RequestRow } from "@/features/tasks/components/request-row";
+import { LatestUpdates } from "@/features/tasks/components/latest-updates";
+import { getMyActivity, listLatestUpdates } from "@/features/tasks/activity";
+import Link from "next/link";
 import { Panel, PanelEmpty, PanelList } from "@/components/ui/panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { EXPIRY_WARNING_DAYS, OPEN_TASK_STATUSES } from "@/lib/constants";
@@ -18,10 +21,12 @@ export const metadata = { title: "Home" };
  */
 export default async function HomePage() {
   const profile = await requireClient();
-  const [renewals, tasks, properties] = await Promise.all([
+  const [renewals, tasks, properties, updates, activity] = await Promise.all([
     listRenewals({ withinDays: EXPIRY_WARNING_DAYS }),
     listTasks(),
     listProperties(),
+    listLatestUpdates(profile.id, 4),
+    getMyActivity(),
   ]);
 
   const waiting = tasks.filter((t) => t.status === "waiting_on_client");
@@ -38,42 +43,61 @@ export default async function HomePage() {
         subtitle={summary(waiting.length, renewals.length)}
       />
 
+      <div className="mb-4 md:mb-5">
+        <LatestUpdates updates={updates} />
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 md:gap-5 lg:grid-cols-3 lg:items-start">
         <div className="grid gap-4 md:gap-5 lg:contents">
           <Panel title="Waiting on you" count={waiting.length} className="settle">
             {waiting.length > 0 ? (
               <PanelList>
-                {waiting.map((task) => (
-                  <RequestRow key={task.id} task={task} showProperty={many} />
+                {waiting.slice(0, SHOW).map((task) => (
+                  <RequestRow key={task.id} task={task} showProperty={many} unread={activity.get(task.id)?.unread} lastActivity={activity.get(task.id)?.lastMessageAt} />
                 ))}
               </PanelList>
             ) : (
               <PanelEmpty>Nothing needs a reply from you.</PanelEmpty>
             )}
+            <SeeAll count={waiting.length} href="/tasks" />
           </Panel>
 
           <Panel title={`Next ${EXPIRY_WARNING_DAYS} days`} count={renewals.length} className="settle">
             {renewals.length > 0 ? (
-              <RenewalRows items={renewals} showProperty={many} />
+              <RenewalRows items={renewals.slice(0, SHOW)} showProperty={many} />
             ) : (
               <PanelEmpty>No renewals or services due in the next {EXPIRY_WARNING_DAYS} days.</PanelEmpty>
             )}
+            <SeeAll count={renewals.length} href={properties.length === 1 ? `/properties/${properties[0].id}` : "/properties"} />
           </Panel>
         </div>
 
         <Panel title="Dar is handling" count={handling.length} className="settle">
           {handling.length > 0 ? (
             <PanelList>
-              {handling.map((task) => (
-                <RequestRow key={task.id} task={task} showProperty={many} />
+              {handling.slice(0, SHOW).map((task) => (
+                <RequestRow key={task.id} task={task} showProperty={many} unread={activity.get(task.id)?.unread} lastActivity={activity.get(task.id)?.lastMessageAt} />
               ))}
             </PanelList>
           ) : (
             <PanelEmpty>Nothing in progress. Anything you send us appears here while we work on it.</PanelEmpty>
           )}
+          <SeeAll count={handling.length} href="/tasks" />
         </Panel>
       </div>
     </>
+  );
+}
+
+const SHOW = 3;
+
+/** Shown only when a panel holds more than it displays. */
+function SeeAll({ count, href }: { count: number; href: string }) {
+  if (count <= SHOW) return null;
+  return (
+    <Link href={href} className="flex min-h-[48px] items-center justify-center border-t border-[var(--line)] font-semibold text-[var(--accent-text)] hover:bg-[var(--surface-2)]">
+      See all {count}
+    </Link>
   );
 }
 

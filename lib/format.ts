@@ -61,3 +61,33 @@ export function formatFileSize(bytes: number | null | undefined): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+const DUBAI_DAY = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Dubai",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const WEEKDAY = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dubai", weekday: "long" });
+const CLOCK = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dubai", hour: "2-digit", minute: "2-digit" });
+
+/**
+ * Conversation times: "Just now", "5m ago", "3h ago", "Yesterday", a weekday within the
+ * week, then the date. Days are counted in Dubai time, not the server's.
+ */
+export function formatRelative(value: string | Date | null | undefined, now: Date = new Date()): string {
+  if (!value) return "";
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return "";
+  const minutes = Math.floor((now.getTime() - date.getTime()) / 60_000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const dayOf = (d: Date) => DUBAI_DAY.format(d);
+  const today = dayOf(now);
+  const yesterday = dayOf(new Date(now.getTime() - 86_400_000));
+  if (dayOf(date) === today) return `${Math.floor(minutes / 60)}h ago`;
+  if (dayOf(date) === yesterday) return `Yesterday, ${CLOCK.format(date)}`;
+  if (minutes < 7 * 24 * 60) return WEEKDAY.format(date);
+  return formatDate(date);
+}

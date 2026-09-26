@@ -6,6 +6,7 @@ import { Panel, PanelEmpty, PanelList } from "@/components/ui/panel";
 import { OPEN_TASK_STATUSES } from "@/lib/constants";
 import { RequestRow } from "./request-row";
 import type { TaskWithProperty } from "@/features/tasks/types";
+import type { TaskActivity } from "@/features/tasks/activity";
 
 /**
  * Requests as list and detail. Desktop shows both side by side, with the open request
@@ -15,18 +16,24 @@ import type { TaskWithProperty } from "@/features/tasks/types";
 export function RequestsSplit({
   tasks,
   showProperty,
+  activity,
   children,
 }: {
   tasks: TaskWithProperty[];
   showProperty: boolean;
+  activity: Record<string, TaskActivity>;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const selectedId = pathname.startsWith("/tasks/") ? pathname.split("/")[2] : null;
   const isIndex = !selectedId;
 
-  const open = tasks.filter((t) => OPEN_TASK_STATUSES.includes(t.status));
-  const closed = tasks.filter((t) => !OPEN_TASK_STATUSES.includes(t.status));
+  // Requests with news float to the top, like a messaging app; the server's order
+  // (priority, then recency) is kept otherwise.
+  const withNewsFirst = (list: TaskWithProperty[]) =>
+    [...list].sort((a, b) => Number((activity[b.id]?.unread ?? 0) > 0) - Number((activity[a.id]?.unread ?? 0) > 0));
+  const open = withNewsFirst(tasks.filter((t) => OPEN_TASK_STATUSES.includes(t.status)));
+  const closed = withNewsFirst(tasks.filter((t) => !OPEN_TASK_STATUSES.includes(t.status)));
   const selectedIsClosed = closed.some((t) => t.id === selectedId);
   const [show, setShow] = useState<"open" | "closed">(selectedIsClosed ? "closed" : "open");
   const visible = show === "open" ? open : closed;
@@ -68,6 +75,8 @@ export function RequestsSplit({
                   task={task}
                   showProperty={showProperty}
                   current={task.id === selectedId}
+                  unread={task.id === selectedId ? 0 : (activity[task.id]?.unread ?? 0)}
+                  lastActivity={activity[task.id]?.lastMessageAt}
                 />
               ))}
             </PanelList>

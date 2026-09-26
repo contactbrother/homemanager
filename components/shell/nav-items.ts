@@ -16,6 +16,8 @@ export interface NavItem {
   exact?: boolean;
   /** Other path prefixes that also mark this item as current. */
   also?: string[];
+  /** A count shown on the item, such as requests with unread updates. */
+  badge?: number;
 }
 
 export const CLIENT_NAV: NavItem[] = [
