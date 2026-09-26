@@ -4,6 +4,9 @@ import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { isImmersive } from "@/components/shell/immersive";
+import { addRequestAttachments } from "@/features/tasks/actions";
+import { uploadAttachments, type PickedFile } from "@/features/tasks/upload";
+import { AttachButton, PickedStrip } from "./attachment-picker";
 import { createTask } from "@/features/tasks/actions";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
@@ -32,6 +35,8 @@ export function NewTaskSheet({
   const [pending, start] = useTransition();
   const router = useRouter();
   const pathname = usePathname();
+  const [picked, setPicked] = useState<PickedFile[]>([]);
+  const [stage, setStage] = useState<string | null>(null);
 
   if (properties.length === 0) return null;
   // Full-screen phone views have their own controls at the bottom.
@@ -40,21 +45,32 @@ export function NewTaskSheet({
   function send() {
     setError(null);
     start(async () => {
-      const result = await createTask({
-        propertyId: propertyId || properties[0].id,
-        title,
-        body,
-        priority,
-      });
+      const home = propertyId || properties[0].id;
+      setStage("Sending");
+      const result = await createTask({ propertyId: home, title, body, priority });
       if (!result.ok) {
+        setStage(null);
         setError(result.error);
         return;
       }
+      if (picked.length) {
+        setStage(`Uploading ${picked.length} ${picked.length === 1 ? "file" : "files"}`);
+        try {
+          const uploaded = await uploadAttachments(home, result.data.id, picked);
+          const attached = await addRequestAttachments({ taskId: result.data.id, attachments: uploaded });
+          if (!attached.ok) setError(attached.error);
+        } catch {
+          setError("Your request was sent, but the photos did not upload. Add them in the conversation.");
+        }
+      }
+      setStage(null);
       navigator.vibrate?.(12);
       setOpen(false);
       setTitle("");
       setBody("");
       setPriority("normal");
+      setPicked([]);
+      router.push(`/tasks/${result.data.id}`);
       router.refresh();
     });
   }
@@ -146,6 +162,12 @@ export function NewTaskSheet({
             />
           </div>
 
+          <div className="space-y-2">
+            <AttachButton picked={picked} onChange={setPicked} onError={setError} disabled={pending} />
+            <PickedStrip picked={picked} onRemove={(id) => setPicked((p) => p.filter((x) => x.id !== id))} />
+            <p className="text-[length:var(--text-small)] text-[var(--mute)]">A photo of the problem helps us send the right person first time.</p>
+          </div>
+
           <PriorityPicker value={priority} onChange={setPriority} />
 
           {error ? (
@@ -155,7 +177,7 @@ export function NewTaskSheet({
           ) : null}
 
           <Button type="submit" thumb disabled={pending}>
-            {pending ? "Sending" : "Send request"}
+            {pending ? (stage ?? "Sending") : "Send request"}
           </Button>
         </form>
       </Sheet>

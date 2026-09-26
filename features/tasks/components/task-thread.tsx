@@ -5,6 +5,7 @@ import { TaskHistory } from "./task-history";
 import { AddNote } from "./add-note";
 import { NoteComposer } from "./note-composer";
 import type { TaskMessageWithAuthor } from "@/features/tasks/types";
+import type { ShownAttachment } from "./attachment-grid";
 
 /**
  * FR-041. A note appears in the history the moment it is sent, and is removed if the
@@ -17,6 +18,7 @@ export function TaskThread({
   authorName,
   label,
   variant,
+  propertyId,
 }: {
   taskId: string;
   entries: TaskMessageWithAuthor[];
@@ -24,13 +26,15 @@ export function TaskThread({
   authorName: string;
   label?: string;
   variant?: "list" | "timeline";
+  /** Needed to attach photos: files live in the property's folder. */
+  propertyId?: string;
 }) {
   const [pending, setPending] = useState<TaskMessageWithAuthor | null>(null);
   const [optimistic] = useOptimistic(pending ? [...entries, pending] : entries);
 
-  const stage = (body: string | null) =>
+  const stage = (body: string | null, attachments: ShownAttachment[] = []) =>
     setPending(
-      body
+      body || attachments.length
         ? {
             id: `pending-${Date.now()}`,
             task_id: taskId,
@@ -44,6 +48,19 @@ export function TaskThread({
               full_name: authorName,
               role: audience === "team" ? "admin" : "client",
             },
+            task_attachments: attachments.map((a) => ({
+              id: a.id,
+              task_id: taskId,
+              message_id: null,
+              uploaded_by: "",
+              file_path: "",
+              mime_type: a.mime_type,
+              file_size: null,
+              width: null,
+              height: null,
+              created_at: new Date().toISOString(),
+              url: a.url,
+            })),
           }
         : null,
     );
@@ -54,7 +71,7 @@ export function TaskThread({
       <>
         <TaskHistory entries={optimistic} audience={audience} variant="timeline" />
         <div id="thread-end" />
-        <NoteComposer taskId={taskId} onOptimistic={stage} />
+        <NoteComposer taskId={taskId} propertyId={propertyId} onOptimistic={stage} />
       </>
     );
   }

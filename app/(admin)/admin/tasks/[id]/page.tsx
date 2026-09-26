@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import { getTask, listTaskHistory } from "@/features/tasks/queries";
+import { getTask, listRequestAttachments, listTaskHistory } from "@/features/tasks/queries";
 import { TaskThread } from "@/features/tasks/components/task-thread";
+import { AttachmentGrid } from "@/features/tasks/components/attachment-grid";
 import { StatusControl } from "@/features/tasks/components/status-control";
 import { formatDate } from "@/lib/format";
 
@@ -13,7 +14,7 @@ export default async function AdminTaskPage({
   const task = await getTask(id);
   if (!task) notFound();
 
-  const history = await listTaskHistory(id);
+  const [history, requestFiles] = await Promise.all([listTaskHistory(id), listRequestAttachments(id)]);
 
   return (
     <>
@@ -28,6 +29,7 @@ export default async function AdminTaskPage({
       </div>
 
       {task.body ? <p className="mt-4">{task.body}</p> : null}
+      {requestFiles.length ? <AttachmentGrid items={requestFiles} /> : null}
 
       <div className="mt-6">
         <StatusControl

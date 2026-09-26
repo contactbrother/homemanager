@@ -7,7 +7,7 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), geolocation=(), microphone=(self), payment=()",
+    value: "camera=(self), geolocation=(), microphone=(self), payment=()",
   },
   {
     key: "Strict-Transport-Security",

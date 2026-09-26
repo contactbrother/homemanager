@@ -6,7 +6,8 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/constants";
-import type { Task, TaskMessageWithAuthor, TaskWithProperty } from "./types";
+import type { Task, TaskAttachment, TaskMessageWithAuthor, TaskWithProperty } from "./types";
+import { STORAGE_BUCKET } from "@/lib/constants";
 
 /** FR-029. Open tasks before completed ones, newest first within each group. */
 async function listTasksUncached(): Promise<TaskWithProperty[]> {
@@ -63,11 +64,43 @@ export async function listTaskHistory(
   const supabase = await createClient();
   const { data } = await supabase
     .from("task_messages")
-    .select("*, profiles(id, full_name, role)")
+    .select("*, profiles(id, full_name, role), task_attachments(*)")
     .eq("task_id", taskId)
     .order("created_at", { ascending: true });
 
-  return (data as TaskMessageWithAuthor[]) ?? [];
+  const rows = (data as TaskMessageWithAuthor[]) ?? [];
+  const all = rows.flatMap((r) => r.task_attachments ?? []);
+  await signAttachments(all);
+  return rows;
+}
+
+/** Photos and videos added with the request itself, not with a later message. */
+export async function listRequestAttachments(taskId: string): Promise<TaskAttachment[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("task_attachments")
+    .select("*")
+    .eq("task_id", taskId)
+    .is("message_id", null)
+    .order("created_at", { ascending: true });
+  const rows = (data as TaskAttachment[]) ?? [];
+  await signAttachments(rows);
+  return rows;
+}
+
+/**
+ * One batch call signs every attachment on the page. Links last an hour so a photo
+ * does not break while someone is looking at it; storage rules still decide who can
+ * create them.
+ */
+async function signAttachments(rows: TaskAttachment[]): Promise<void> {
+  if (rows.length === 0) return;
+  const supabase = await createClient();
+  const { data } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .createSignedUrls(rows.map((r) => r.file_path), 3600);
+  const byPath = new Map((data ?? []).map((d) => [d.path, d.signedUrl]));
+  for (const row of rows) row.url = byPath.get(row.file_path) ?? null;
 }
 
 /** Open before closed; within open, emergency and high first, then most recent. */

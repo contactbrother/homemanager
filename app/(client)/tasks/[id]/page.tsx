@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { getTask, listTaskHistory } from "@/features/tasks/queries";
+import { getTask, listRequestAttachments, listTaskHistory } from "@/features/tasks/queries";
+import { AttachmentGrid } from "@/features/tasks/components/attachment-grid";
 import { TaskThread } from "@/features/tasks/components/task-thread";
 import { LiveThread } from "@/features/tasks/components/live-thread";
 import { getMyActivity } from "@/features/tasks/activity";
@@ -33,7 +34,11 @@ export default async function TaskPage({
   const task = await getTask(id);
   if (!task) notFound();
 
-  const [history, activity] = await Promise.all([listTaskHistory(id), getMyActivity()]);
+  const [history, activity, requestFiles] = await Promise.all([
+    listTaskHistory(id),
+    getMyActivity(),
+    listRequestAttachments(id),
+  ]);
   const hadUnread = (activity.get(id)?.unread ?? 0) > 0;
   const status = TASK_STATUS_LABELS[task.status];
   const facts: Array<[string, string]> = [
@@ -72,6 +77,7 @@ export default async function TaskPage({
           ) : (
             <p className="text-[var(--mute)]">No extra details were added.</p>
           )}
+          {requestFiles.length ? <AttachmentGrid items={requestFiles} /> : null}
           <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-[var(--line)] pt-4 pb-3 sm:grid-cols-4 md:pb-0">
             {facts
               .filter(([, value]) => value)
@@ -93,6 +99,7 @@ export default async function TaskPage({
           audience="client"
           authorName={profile.full_name ?? "You"}
           variant="timeline"
+          propertyId={task.property_id}
         />
       </section>
     </div>

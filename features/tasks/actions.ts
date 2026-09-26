@@ -8,6 +8,16 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/constants";
+import type { UploadedAttachment } from "./types";
+
+const MAX_ATTACHMENTS = 6;
+
+/** Files for a request must sit in that request's own folder. RLS decides whether the request is visible. */
+async function attachmentPrefix(taskId: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("tasks").select("property_id").eq("id", taskId).maybeSingle();
+  return data ? `${data.property_id}/${taskId}/attachments/` : null;
+}
 
 /**
  * FR-021 to FR-026, revised. A request is a short title, optional detail and a
@@ -57,13 +67,16 @@ export async function createTask(input: {
   return ok({ id: row.id });
 }
 
-/** FR-028. Client or team. */
+/** FR-028. Client or team. A note can carry photos and videos, or be only those. */
 export async function addTaskNote(input: {
   taskId: string;
   body: string;
+  attachments?: UploadedAttachment[];
 }): Promise<ActionResult> {
   const body = input.body.trim();
-  if (!body) return fail("Write a note first.");
+  const files = input.attachments ?? [];
+  if (!body && files.length === 0) return fail("Write a note first.");
+  if (files.length > MAX_ATTACHMENTS) return fail(`Up to ${MAX_ATTACHMENTS} photos or videos at a time.`);
 
   const supabase = await createClient();
   const {
@@ -71,13 +84,39 @@ export async function addTaskNote(input: {
   } = await supabase.auth.getUser();
   if (!user) return fail("You are not signed in.");
 
-  const { error } = await supabase.from("task_messages").insert({
-    task_id: input.taskId,
-    author_id: user.id,
-    body,
-  });
+  if (files.length) {
+    const prefix = await attachmentPrefix(input.taskId);
+    if (!prefix || files.some((f) => !f.path.startsWith(prefix))) {
+      return fail("Those files could not be attached. Try again.");
+    }
+  }
 
-  if (error) return fail("That note did not send. Try again.");
+  const { data: message, error } = await supabase
+    .from("task_messages")
+    .insert({ task_id: input.taskId, author_id: user.id, body: body || null })
+    .select("id")
+    .single();
+
+  if (error || !message) return fail("That note did not send. Try again.");
+
+  if (files.length) {
+    const { error: attachError } = await supabase.from("task_attachments").insert(
+      files.map((f) => ({
+        task_id: input.taskId,
+        message_id: message.id,
+        uploaded_by: user.id,
+        file_path: f.path,
+        mime_type: f.mimeType,
+        file_size: f.size,
+        width: f.width ?? null,
+        height: f.height ?? null,
+      })),
+    );
+    if (attachError) {
+      console.error("[task] attachments failed", attachError.message);
+      return fail("Your note was sent, but the photos did not attach. Try adding them again.");
+    }
+  }
 
   revalidatePath(`/tasks/${input.taskId}`);
   revalidatePath(`/admin/tasks/${input.taskId}`);
@@ -175,5 +214,37 @@ export async function markTaskRead(taskId: string): Promise<ActionResult> {
     .from("task_reads")
     .upsert({ user_id: userId, task_id: taskId, last_read_at: new Date().toISOString() }, { onConflict: "user_id,task_id" });
   if (error) return fail("Could not update read status.");
+  return ok();
+}
+
+/** Photos and videos added along with a new request. */
+export async function addRequestAttachments(input: {
+  taskId: string;
+  attachments: UploadedAttachment[];
+}): Promise<ActionResult> {
+  if (input.attachments.length === 0) return ok();
+  if (input.attachments.length > MAX_ATTACHMENTS) return fail(`Up to ${MAX_ATTACHMENTS} photos or videos at a time.`);
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getClaims();
+  const userId = auth?.claims?.sub;
+  if (!userId) return fail("You are not signed in.");
+  const prefix = await attachmentPrefix(input.taskId);
+  if (!prefix || input.attachments.some((f) => !f.path.startsWith(prefix))) {
+    return fail("Those files could not be attached.");
+  }
+  const { error } = await supabase.from("task_attachments").insert(
+    input.attachments.map((f) => ({
+      task_id: input.taskId,
+      message_id: null,
+      uploaded_by: userId,
+      file_path: f.path,
+      mime_type: f.mimeType,
+      file_size: f.size,
+      width: f.width ?? null,
+      height: f.height ?? null,
+    })),
+  );
+  if (error) return fail("Your request was sent, but the photos did not attach. Add them in the conversation.");
+  revalidatePath(`/tasks/${input.taskId}`);
   return ok();
 }

@@ -5,6 +5,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { TASK_STATUS_LABELS, TASK_STATUS_LABELS_TEAM } from "@/lib/constants";
 import { formatDate, formatRelative } from "@/lib/format";
 import type { TaskMessageWithAuthor } from "@/features/tasks/types";
+import { AttachmentGrid } from "./attachment-grid";
 
 /**
  * FR-028, FR-050. Notes and status changes in one chronological list, so a reopened
@@ -81,6 +82,7 @@ export function TaskHistory({
                   {entry.body}
                 </p>
               ) : null}
+              {entry.task_attachments?.length ? <AttachmentGrid items={entry.task_attachments} /> : null}
             </li>
           );
         })}
@@ -108,6 +110,7 @@ export function TaskHistory({
               </p>
             ) : null}
             {entry.body ? <p className="mt-1">{entry.body}</p> : null}
+            {entry.task_attachments?.length ? <AttachmentGrid items={entry.task_attachments} /> : null}
           </li>
         );
       })}

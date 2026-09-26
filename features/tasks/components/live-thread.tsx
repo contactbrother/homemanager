@@ -31,6 +31,13 @@ export function LiveThread({ taskId, hadUnread }: { taskId: string; hadUnread: b
           if (!cancelled) router.refresh();
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "task_attachments", filter: `task_id=eq.${taskId}` },
+        () => {
+          if (!cancelled) router.refresh();
+        },
+      )
       .subscribe();
 
     return () => {
