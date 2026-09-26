@@ -71,7 +71,12 @@ export function TaskThread({
       <>
         <TaskHistory entries={optimistic} audience={audience} variant="timeline" />
         <div id="thread-end" />
-        <NoteComposer taskId={taskId} propertyId={propertyId} onOptimistic={stage} />
+        <NoteComposer
+          taskId={taskId}
+          propertyId={propertyId}
+          onOptimistic={stage}
+          placeholder={audience === "team" ? "Reply to the client" : undefined}
+        />
       </>
     );
   }

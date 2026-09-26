@@ -6,7 +6,8 @@ export type IconName =
   | "clients"
   | "inbox"
   | "renewals"
-  | "vendors";
+  | "vendors"
+  | "enquiries";
 
 export interface NavItem {
   href: string;
@@ -30,6 +31,7 @@ export const CLIENT_NAV: NavItem[] = [
 export const TEAM_NAV: NavItem[] = [
   { href: "/admin", label: "Clients", icon: "clients", exact: true, also: ["/admin/clients"] },
   { href: "/admin/tasks", label: "Requests", icon: "inbox" },
+  { href: "/admin/enquiries", label: "Enquiries", icon: "enquiries" },
   { href: "/admin/renewals", label: "Renewals", icon: "renewals" },
   { href: "/admin/vendors", label: "Vendors", icon: "vendors" },
 ];

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { listAllTasks } from "@/features/tasks/queries";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { StatusPill } from "@/components/ui/status-pill";
+import { getMyActivity } from "@/features/tasks/activity";
+import { RequestRow } from "@/features/tasks/components/request-row";
+import { Panel, PanelEmpty, PanelList } from "@/components/ui/panel";
+import { PageHeader } from "@/components/ui/page-header";
 import {
+  OPEN_TASK_STATUSES,
   TASK_PRIORITIES,
   TASK_PRIORITY_LABELS,
   TASK_STATUSES,
@@ -11,113 +13,105 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/constants";
-import { PriorityPill } from "@/features/tasks/components/priority-pill";
-import { formatDate } from "@/lib/format";
 
-export const metadata = { title: "Request queue" };
+export const metadata = { title: "Requests" };
 
+type Show = "open" | "all" | TaskStatus;
+
+/**
+ * The team's queue. Open requests by default; anything with a new client message is
+ * pulled to the top, then emergencies and high priority, then the most recent.
+ */
 export default async function AdminTasksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; priority?: string }>;
+  searchParams: Promise<{ show?: string; priority?: string }>;
 }) {
-  const { status, priority } = await searchParams;
-  const filter = TASK_STATUSES.includes(status as TaskStatus)
-    ? (status as TaskStatus)
-    : undefined;
-  const priorityFilter = TASK_PRIORITIES.includes(priority as TaskPriority)
-    ? (priority as TaskPriority)
-    : undefined;
+  const { show: rawShow, priority } = await searchParams;
+  const show: Show =
+    rawShow === "all" || TASK_STATUSES.includes(rawShow as TaskStatus) ? (rawShow as Show) : "open";
+  const priorityFilter = TASK_PRIORITIES.includes(priority as TaskPriority) ? (priority as TaskPriority) : undefined;
 
-  const all = await listAllTasks(filter);
-  const tasks = priorityFilter ? all.filter((t) => t.priority === priorityFilter) : all;
+  const [all, activity] = await Promise.all([listAllTasks(), getMyActivity()]);
+  const inView = all
+    .filter((t) => (show === "open" ? OPEN_TASK_STATUSES.includes(t.status) : show === "all" ? true : t.status === show))
+    .filter((t) => (priorityFilter ? t.priority === priorityFilter : true));
+  const tasks = [...inView].sort(
+    (a, b) => Number((activity.get(b.id)?.unread ?? 0) > 0) - Number((activity.get(a.id)?.unread ?? 0) > 0),
+  );
+  const openCount = all.filter((t) => OPEN_TASK_STATUSES.includes(t.status)).length;
+
+  const statusChips: Array<[Show, string]> = [
+    ["open", `Open ${openCount}`],
+    ...TASK_STATUSES.map((s): [Show, string] => [s, TASK_STATUS_LABELS_TEAM[s]]),
+    ["all", "All"],
+  ];
 
   return (
     <>
-      <h1 className="text-[length:var(--text-title)]">Request queue</h1>
+      <PageHeader title="Requests" subtitle="New client messages are pulled to the top." />
 
-      <nav aria-label="Filter by status" className="mt-4 flex flex-wrap gap-2">
-        <FilterLink
-          href={hrefFor(undefined, priorityFilter)}
-          active={!filter}
-          label="All"
-        />
-        {TASK_STATUSES.map((value) => (
-          <FilterLink
-            key={value}
-            href={hrefFor(value, priorityFilter)}
-            active={filter === value}
-            label={TASK_STATUS_LABELS_TEAM[value]}
-          />
-        ))}
-      </nav>
-      <nav aria-label="Filter by priority" className="mt-2 flex flex-wrap gap-2">
-        <FilterLink href={hrefFor(filter, undefined)} active={!priorityFilter} label="Any priority" />
-        {TASK_PRIORITIES.map((value) => (
-          <FilterLink
-            key={value}
-            href={hrefFor(filter, value)}
-            active={priorityFilter === value}
-            label={TASK_PRIORITY_LABELS[value]}
-          />
-        ))}
-      </nav>
+      <Chips label="Status" items={statusChips.map(([value, text]) => ({ text, href: hrefFor(value, priorityFilter), active: show === value }))} />
+      <div className="mt-2" />
+      <Chips
+        label="Priority"
+        items={[
+          { text: "Any priority", href: hrefFor(show, undefined), active: !priorityFilter },
+          ...TASK_PRIORITIES.map((p) => ({ text: TASK_PRIORITY_LABELS[p], href: hrefFor(show, p), active: priorityFilter === p })),
+        ]}
+      />
 
-      {tasks.length === 0 ? (
-        <EmptyState>Nothing in this filter.</EmptyState>
-      ) : (
-        <ul className="mt-6 space-y-3">
-          {tasks.map((task) => (
-            <Card as="li" key={task.id}>
-              <Link href={`/admin/tasks/${task.id}`} className="block p-4 min-h-[44px]">
-                <div className="flex items-start justify-between gap-3">
-                  <span className="font-medium">{task.title}</span>
-                  <span className="flex shrink-0 gap-1.5">
-                    <PriorityPill priority={task.priority} />
-                    <StatusPill>{TASK_STATUS_LABELS_TEAM[task.status]}</StatusPill>
-                  </span>
-                </div>
-                <span className="mt-1 block text-[var(--mute)]">
-                  {task.properties?.name ?? "Unknown property"} ·{" "}
-                  {formatDate(task.updated_at)}
-                </span>
-              </Link>
-            </Card>
-          ))}
-        </ul>
-      )}
+      <Panel as="div" className="mt-5">
+        {tasks.length === 0 ? (
+          <PanelEmpty>Nothing in this view.</PanelEmpty>
+        ) : (
+          <PanelList>
+            {tasks.map((task) => (
+              <RequestRow
+                key={task.id}
+                task={task}
+                showProperty
+                href={`/admin/tasks/${task.id}`}
+                statusLabels={TASK_STATUS_LABELS_TEAM}
+                unread={activity.get(task.id)?.unread}
+                lastActivity={activity.get(task.id)?.lastMessageAt}
+              />
+            ))}
+          </PanelList>
+        )}
+      </Panel>
     </>
   );
 }
 
-function hrefFor(status?: TaskStatus, priority?: TaskPriority): string {
+function hrefFor(show: Show, priority?: TaskPriority): string {
   const params = new URLSearchParams();
-  if (status) params.set("status", status);
+  if (show !== "open") params.set("show", show);
   if (priority) params.set("priority", priority);
   const query = params.toString();
   return query ? `/admin/tasks?${query}` : "/admin/tasks";
 }
 
-function FilterLink({
-  href,
-  active,
-  label,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-}) {
+function Chips({ label, items }: { label: string; items: Array<{ text: string; href: string; active: boolean }> }) {
   return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={`inline-flex min-h-[40px] items-center rounded-[var(--r-md)] border px-3 text-[length:var(--text-small)] ${
-        active
-          ? "border-[var(--ink)] bg-[var(--ink)] text-white font-medium"
-          : "border-[var(--line)] text-[var(--ink-soft)] hover:bg-[var(--surface-2)]"
-      }`}
-    >
-      {label}
-    </Link>
+    <nav aria-label={label} className="-mx-5 overflow-x-auto px-5 md:mx-0 md:px-0">
+      <ul className="flex min-w-max gap-2">
+        {items.map((item) => (
+          <li key={item.href + item.text}>
+            <Link
+              href={item.href}
+              replace
+              scroll={false}
+              aria-current={item.active ? "page" : undefined}
+              className={`inline-flex min-h-[40px] items-center rounded-[var(--r-full)] px-3.5 text-[length:var(--text-small)] font-semibold transition-colors ${
+                item.active ? "bg-[var(--accent)] text-white" : "border border-[var(--line)] bg-[var(--surface)] text-[var(--ink-soft)] hover:text-[var(--ink)]"
+              }`}
+            >
+              {item.text}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }

@@ -11,6 +11,7 @@ import {
   UserRound,
   UsersRound,
   Wrench,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 import { isActive, type IconName, type NavItem } from "./nav-items";
@@ -25,6 +26,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   inbox: Inbox,
   renewals: CalendarClock,
   vendors: Wrench,
+  enquiries: Mail,
 };
 
 /**

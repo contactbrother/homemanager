@@ -1,6 +1,7 @@
 "use server";
 
 import { createHash } from "node:crypto";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/supabase/types";
@@ -73,5 +74,21 @@ export async function sendEnquiry(input: {
     });
   }
 
+  return ok();
+}
+
+/** Team only, by policy: move an enquiry between new, contacted and closed. */
+export async function setEnquiryStatus(input: {
+  id: string;
+  status: "new" | "contacted" | "closed";
+}): Promise<ActionResult> {
+  if (!["new", "contacted", "closed"].includes(input.status)) return fail("Choose a status.");
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("enquiries")
+    .update({ status: input.status }, { count: "exact" })
+    .eq("id", input.id);
+  if (error || count === 0) return fail("That did not save. Try again.");
+  revalidatePath("/admin/enquiries");
   return ok();
 }

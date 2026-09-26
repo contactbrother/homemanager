@@ -3,6 +3,8 @@ import { requireAdmin } from "@/features/auth/guards";
 import { signOut } from "@/features/auth/actions";
 import { AppShell } from "@/components/shell/app-shell";
 import { TEAM_NAV } from "@/components/shell/nav-items";
+import { getMyActivity } from "@/features/tasks/activity";
+import { countNewEnquiries } from "@/features/enquiries/queries";
 
 export default async function AdminLayout({
   children,
@@ -10,10 +12,15 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   await requireAdmin();
+  const [activity, newEnquiries] = await Promise.all([getMyActivity(), countNewEnquiries()]);
+  const unread = [...activity.values()].filter((a) => a.unread > 0).length;
+  const items = TEAM_NAV.map((item) =>
+    item.icon === "inbox" ? { ...item, badge: unread } : item.icon === "enquiries" ? { ...item, badge: newEnquiries } : item,
+  );
 
   return (
     <AppShell
-      items={TEAM_NAV}
+      items={items}
       homeHref="/admin"
       team
       width="wide"

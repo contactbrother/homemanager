@@ -73,41 +73,47 @@ export function StatusControl({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <label htmlFor="status">Status</label>
-        <select
-          id="status"
-          value={optimistic}
-          disabled={pending}
-          onChange={(e) => change(e.target.value as TaskStatus)}
-          className="min-h-[44px] px-4 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]"
-        >
-          {TASK_STATUSES.map((value) => (
-            <option key={value} value={value}>
-              {TASK_STATUS_LABELS_TEAM[value]}
-            </option>
-          ))}
-        </select>
+      <div className="grid grid-cols-2 gap-3 md:flex md:flex-wrap md:items-end">
+        <div className="min-w-0">
+          <label htmlFor="status" className="mb-1 block text-[length:var(--text-small)] text-[var(--mute)]">Status</label>
+          <select
+            id="status"
+            value={optimistic}
+            disabled={pending}
+            onChange={(e) => change(e.target.value as TaskStatus)}
+            className="w-full min-h-[44px] px-3 md:w-auto"
+          >
+            {TASK_STATUSES.map((value) => (
+              <option key={value} value={value}>
+                {TASK_STATUS_LABELS_TEAM[value]}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <label htmlFor="priority">Priority</label>
-        <select
-          id="priority"
-          value={optimisticPriority}
-          disabled={pending}
-          onChange={(e) => changePriority(e.target.value as TaskPriority)}
-          className="min-h-[44px] px-4 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface)]"
-        >
-          {TASK_PRIORITIES.map((value) => (
-            <option key={value} value={value}>
-              {TASK_PRIORITY_LABELS[value]}
-            </option>
-          ))}
-        </select>
+        <div className="min-w-0">
+          <label htmlFor="priority" className="mb-1 block text-[length:var(--text-small)] text-[var(--mute)]">Priority</label>
+          <select
+            id="priority"
+            value={optimisticPriority}
+            disabled={pending}
+            onChange={(e) => changePriority(e.target.value as TaskPriority)}
+            className="w-full min-h-[44px] px-3 md:w-auto"
+          >
+            {TASK_PRIORITIES.map((value) => (
+              <option key={value} value={value}>
+                {TASK_PRIORITY_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {renaming ? null : (
-          <Button variant="text" onClick={() => setRenaming(true)}>
-            Rename
-          </Button>
+          <div className="col-span-2 -ml-5 md:col-span-1 md:ml-0">
+            <Button variant="text" onClick={() => setRenaming(true)}>
+              Rename request
+            </Button>
+          </div>
         )}
       </div>
 
@@ -117,7 +123,7 @@ export function StatusControl({
             aria-label="Task title"
             value={draftTitle}
             onChange={(e) => setDraftTitle(e.target.value)}
-            className="min-h-[44px] flex-1 px-4 rounded-[var(--r-md)] border border-[var(--line)]"
+            className="min-h-[44px] flex-1 px-4"
           />
           <Button variant="outline" onClick={rename} disabled={pending}>
             Save

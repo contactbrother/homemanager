@@ -53,7 +53,14 @@ export function TaskHistory({
       <ol className="relative space-y-5 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-[var(--line)]">
         {visible.map((entry) => {
           const team = entry.profiles?.role === "admin";
-          const who = team ? "Dar" : "You";
+          const who =
+            audience === "team"
+              ? team
+                ? "Dar team"
+                : (entry.profiles?.full_name ?? "Client")
+              : team
+                ? "Dar"
+                : "You";
           return (
             <li key={entry.id} className="relative pl-7">
               <span

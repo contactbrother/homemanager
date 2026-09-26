@@ -13,6 +13,8 @@ export function RequestRow({
   current = false,
   unread = 0,
   lastActivity,
+  href,
+  statusLabels,
 }: {
   task: Task | TaskWithProperty;
   showProperty?: boolean;
@@ -21,13 +23,17 @@ export function RequestRow({
   unread?: number;
   /** The latest message or change, when known; otherwise the request's own update time. */
   lastActivity?: string | null;
+  /** Where the row leads; the team console opens its own request page. */
+  href?: string;
+  /** Wording for statuses; the team sees "Waiting on client" rather than "Waiting on you". */
+  statusLabels?: Record<string, string>;
 }) {
   const property = "properties" in task ? task.properties?.name : null;
   const when = lastActivity && lastActivity > task.updated_at ? lastActivity : task.updated_at;
   const meta = [showProperty ? property : null, formatRelative(when)].filter(Boolean).join(", ");
 
   return (
-    <PanelRow href={`/tasks/${task.id}`} current={current}>
+    <PanelRow href={href ?? `/tasks/${task.id}`} current={current}>
       <span className="flex items-start justify-between gap-3">
         <span className={`block text-[var(--ink)] ${unread ? "font-bold" : "font-medium"}`}>{task.title}</span>
         {unread ? (
@@ -39,7 +45,7 @@ export function RequestRow({
       </span>
       <span suppressHydrationWarning className={`mt-0.5 block text-[length:var(--text-small)] ${unread ? "font-semibold text-[var(--accent-text)]" : "text-[var(--mute)]"}`}>{meta}</span>
       <span className="mt-2 flex flex-wrap gap-1.5">
-        <StatusPill tone={statusTone(task.status)}>{TASK_STATUS_LABELS[task.status]}</StatusPill>
+        <StatusPill tone={statusTone(task.status)}>{(statusLabels ?? TASK_STATUS_LABELS)[task.status]}</StatusPill>
         <PriorityPill priority={task.priority} />
       </span>
     </PanelRow>
