@@ -21,6 +21,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/sign-in?error=link`);
   }
 
+  // Only same-site paths, so the link cannot be turned into a redirect elsewhere.
+  const next = searchParams.get("next");
+  const safe = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
   // Middleware routes to /admin or / by role on the next request.
-  return NextResponse.redirect(`${origin}/`);
+  return NextResponse.redirect(`${origin}${safe}`);
 }

@@ -7,7 +7,8 @@ import { RequestRow } from "@/features/tasks/components/request-row";
 import { LatestUpdates } from "@/features/tasks/components/latest-updates";
 import { getMyActivity, listLatestUpdates } from "@/features/tasks/activity";
 import Link from "next/link";
-import { Panel, PanelEmpty, PanelList } from "@/components/ui/panel";
+import { CheckCircle2, MessageCircle } from "lucide-react";
+import { Panel, PanelList } from "@/components/ui/panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { EXPIRY_WARNING_DAYS, OPEN_TASK_STATUSES } from "@/lib/constants";
 
@@ -36,6 +37,46 @@ export default async function HomePage() {
   const many = properties.length > 1;
   const firstName = profile.full_name?.split(" ")[0];
 
+  if (properties.length === 0) return <Welcome name={firstName} />;
+
+  // Panels with something in them are shown; empty ones fold into one "all clear" line.
+  const panels = [
+    waiting.length > 0 ? (
+      <Panel key="waiting" title="Waiting on you" count={waiting.length} className="settle">
+        <PanelList>
+          {waiting.slice(0, SHOW).map((task) => (
+            <RequestRow key={task.id} task={task} showProperty={many} unread={activity.get(task.id)?.unread} lastActivity={activity.get(task.id)?.lastMessageAt} />
+          ))}
+        </PanelList>
+        <SeeAll count={waiting.length} href="/tasks" />
+      </Panel>
+    ) : null,
+    renewals.length > 0 ? (
+      <Panel key="renewals" title={`Next ${EXPIRY_WARNING_DAYS} days`} count={renewals.length} className="settle">
+        <RenewalRows items={renewals.slice(0, SHOW)} showProperty={many} />
+        <SeeAll count={renewals.length} href={properties.length === 1 ? `/properties/${properties[0].id}` : "/properties"} />
+      </Panel>
+    ) : null,
+    handling.length > 0 ? (
+      <Panel key="handling" title="Dar is handling" count={handling.length} className="settle">
+        <PanelList>
+          {handling.slice(0, SHOW).map((task) => (
+            <RequestRow key={task.id} task={task} showProperty={many} unread={activity.get(task.id)?.unread} lastActivity={activity.get(task.id)?.lastMessageAt} />
+          ))}
+        </PanelList>
+        <SeeAll count={handling.length} href="/tasks" />
+      </Panel>
+    ) : null,
+  ].filter(Boolean);
+
+  const clear = [
+    waiting.length === 0 ? "nothing needs a reply from you" : null,
+    renewals.length === 0 ? `nothing is due in the next ${EXPIRY_WARNING_DAYS} days` : null,
+    handling.length === 0 ? "no requests in progress" : null,
+  ].filter(Boolean) as string[];
+
+  const cols = panels.length >= 3 ? "md:grid-cols-2 lg:grid-cols-3" : panels.length === 2 ? "md:grid-cols-2" : "";
+
   return (
     <>
       <PageHeader
@@ -43,49 +84,69 @@ export default async function HomePage() {
         subtitle={summary(waiting.length, renewals.length)}
       />
 
-      <div className="mb-4 md:mb-5">
-        <LatestUpdates updates={updates} />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 md:gap-5 lg:grid-cols-3 lg:items-start">
-        <div className="grid gap-4 md:gap-5 lg:contents">
-          <Panel title="Waiting on you" count={waiting.length} className="settle">
-            {waiting.length > 0 ? (
-              <PanelList>
-                {waiting.slice(0, SHOW).map((task) => (
-                  <RequestRow key={task.id} task={task} showProperty={many} unread={activity.get(task.id)?.unread} lastActivity={activity.get(task.id)?.lastMessageAt} />
-                ))}
-              </PanelList>
-            ) : (
-              <PanelEmpty>Nothing needs a reply from you.</PanelEmpty>
-            )}
-            <SeeAll count={waiting.length} href="/tasks" />
-          </Panel>
-
-          <Panel title={`Next ${EXPIRY_WARNING_DAYS} days`} count={renewals.length} className="settle">
-            {renewals.length > 0 ? (
-              <RenewalRows items={renewals.slice(0, SHOW)} showProperty={many} />
-            ) : (
-              <PanelEmpty>No renewals or services due in the next {EXPIRY_WARNING_DAYS} days.</PanelEmpty>
-            )}
-            <SeeAll count={renewals.length} href={properties.length === 1 ? `/properties/${properties[0].id}` : "/properties"} />
-          </Panel>
+      {updates.length > 0 ? (
+        <div className="mb-4 md:mb-5">
+          <LatestUpdates updates={updates} />
         </div>
+      ) : null}
 
-        <Panel title="Dar is handling" count={handling.length} className="settle">
-          {handling.length > 0 ? (
-            <PanelList>
-              {handling.slice(0, SHOW).map((task) => (
-                <RequestRow key={task.id} task={task} showProperty={many} unread={activity.get(task.id)?.unread} lastActivity={activity.get(task.id)?.lastMessageAt} />
-              ))}
-            </PanelList>
-          ) : (
-            <PanelEmpty>Nothing in progress. Anything you send us appears here while we work on it.</PanelEmpty>
-          )}
-          <SeeAll count={handling.length} href="/tasks" />
-        </Panel>
-      </div>
+      {panels.length > 0 ? <div className={`grid gap-4 md:gap-5 lg:items-start ${cols}`}>{panels}</div> : null}
+
+      {clear.length > 0 ? (
+        <p className="mt-4 flex items-start gap-3 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] px-4 py-3.5 text-[var(--ink-soft)] md:mt-5 md:px-5">
+          <CheckCircle2 aria-hidden size={20} className="mt-0.5 shrink-0 text-[var(--accent)]" />
+          <span>
+            <span className="font-semibold text-[var(--ink)]">All clear: </span>
+            {joinWords(clear)}.
+          </span>
+        </p>
+      ) : null}
     </>
+  );
+}
+
+function joinWords(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+/** A new account with no home yet: what happens next, and one way to move it along. */
+function Welcome({ name }: { name?: string }) {
+  const number = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP?.replace(/[^\d]/g, "");
+  const wa = number
+    ? `https://wa.me/${number}?text=${encodeURIComponent("Hello Dar, I have just created my account and would like to set up my home.")}`
+    : null;
+  const steps: Array<[string, string]> = [
+    ["We get in touch", "Message us on WhatsApp so we can talk through your home and what you would like handled."],
+    ["We set up your home file", "Your documents, the systems in your home and their dates, entered by our team."],
+    ["Everything appears here", "What is due, what we are handling, and every request, all on this screen."],
+  ];
+  return (
+    <div className="mx-auto max-w-2xl">
+      <PageHeader title={name ? `Welcome to Dar, ${name}` : "Welcome to Dar"} subtitle="Your account is ready. Here is what happens next." />
+      <ol className="space-y-3">
+        {steps.map(([title, body], i) => (
+          <li key={title} className="flex gap-4 rounded-[var(--r-lg)] border border-[var(--line)] bg-[var(--surface)] p-4 md:p-5">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] font-bold text-white">{i + 1}</span>
+            <span>
+              <span className="block font-semibold">{title}</span>
+              <span className="mt-1 block text-[var(--ink-soft)]">{body}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div className="mt-6 flex flex-wrap gap-3">
+        {wa ? (
+          <a href={wa} className="inline-flex min-h-[52px] items-center gap-2 rounded-[var(--r-full)] bg-[var(--accent)] px-6 font-semibold text-white active:scale-[0.98]">
+            <MessageCircle aria-hidden size={20} />
+            Message us on WhatsApp
+          </a>
+        ) : null}
+        <Link href="/profile" className="inline-flex min-h-[52px] items-center rounded-[var(--r-full)] border border-[var(--line-strong)] bg-[var(--surface)] px-6 font-semibold">
+          Add your phone number
+        </Link>
+      </div>
+    </div>
   );
 }
 

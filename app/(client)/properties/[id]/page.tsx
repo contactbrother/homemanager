@@ -12,6 +12,7 @@ import { AssetList } from "@/features/assets/components/asset-list";
 import { PropertyOverview } from "@/features/properties/components/property-details";
 import { RenewalRows } from "@/features/renewals/components/renewal-rows";
 import { RequestRow } from "@/features/tasks/components/request-row";
+import { NewTaskSheet } from "@/features/tasks/components/new-task-sheet";
 import { Panel, PanelEmpty, PanelList } from "@/components/ui/panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs } from "@/components/ui/tabs";
@@ -110,7 +111,9 @@ export default async function PropertyPage({
                 ))}
               </PanelList>
             ) : (
-              <PanelEmpty>No requests for this home yet.</PanelEmpty>
+              <PanelEmpty action={<NewTaskSheet properties={[property]} />}>
+                No requests for this home yet. Anything that needs doing, send it here and we will take it from there.
+              </PanelEmpty>
             )}
           </Panel>
         ) : null}

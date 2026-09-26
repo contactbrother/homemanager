@@ -65,7 +65,12 @@ export async function proxy(request: NextRequest) {
   const isPublic =
     path.startsWith("/sign-in") ||
     path.startsWith("/sign-up") ||
+    path.startsWith("/forgot-password") ||
     path.startsWith("/auth/callback");
+
+  // Reached from the reset email, signed in by the link. Without a session, the page
+  // itself explains that the link has expired.
+  if (path === "/reset-password") return response;
 
   if (!user) {
     if (isPublic) return response;

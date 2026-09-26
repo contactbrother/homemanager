@@ -44,9 +44,12 @@ export function SignInForm() {
       </div>
 
       <div>
-        <label htmlFor="password" className="block mb-2">
-          Password
-        </label>
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <label htmlFor="password">Password</label>
+          <Link href="/forgot-password" className="text-[length:var(--text-small)] font-medium text-[var(--accent-text)] underline underline-offset-4">
+            Forgot password?
+          </Link>
+        </div>
         <input
           id="password"
           name="password"

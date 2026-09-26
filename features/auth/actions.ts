@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fail, ok, type ActionResult } from "@/lib/supabase/types";
@@ -182,5 +182,35 @@ export async function setEmailReminders(on: boolean): Promise<ActionResult> {
   if (error) return fail("That did not save. Try again.");
 
   revalidatePath("/profile");
+  return ok();
+}
+
+/**
+ * Forgot password. Always answers the same way, so the form cannot be used to find out
+ * which emails have accounts.
+ */
+export async function requestPasswordReset(email: string): Promise<ActionResult> {
+  const address = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) return fail("Enter the email address you signed up with.");
+  const h = await headers();
+  const origin = h.get("origin") ?? `https://${h.get("host")}`;
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(address, {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  });
+  if (error) console.info("[password-reset] not sent", { reason: error.message });
+  return ok();
+}
+
+/** Set a new password from the reset link. The link's session proves who it is. */
+export async function setNewPassword(password: string): Promise<ActionResult> {
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return fail(`Use at least ${MIN_PASSWORD_LENGTH} characters.`);
+  }
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getClaims();
+  if (!auth?.claims?.sub) return fail("This reset link has expired. Ask for a new one.");
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return fail("The password did not change. Ask for a new link and try again.");
   return ok();
 }
